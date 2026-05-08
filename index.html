@@ -140,24 +140,6 @@
     .pos-n { background:var(--bg4); color:var(--text3); }
     .team-td { font-weight:600; color:var(--text); font-family:var(--font-head); font-size:13px; }
     .pts { font-weight:800; color:var(--accent); font-family:var(--font-head); font-size:14px; }
-    .ai-box {
-      border:1px solid rgba(0,229,160,.18); border-radius:var(--radius);
-      padding:18px 20px; background:linear-gradient(135deg,rgba(0,229,160,.04) 0%,rgba(77,159,255,.02) 100%);
-      margin-bottom:28px; position:relative; overflow:hidden;
-    }
-    .ai-box::before {
-      content:''; position:absolute; top:-30px; right:-30px; width:100px; height:100px;
-      background:radial-gradient(circle,rgba(0,229,160,0.12) 0%,transparent 70%); pointer-events:none;
-    }
-    .ai-header { display:flex; align-items:center; gap:8px; margin-bottom:12px; }
-    .ai-label { font-size:10px; font-weight:800; color:var(--accent); text-transform:uppercase; letter-spacing:.15em; font-family:var(--font-head); }
-    .ai-text { font-size:14px; color:var(--text2); line-height:1.75; }
-    .ai-loading { display:flex; gap:5px; padding:4px 0; align-items:center; }
-    .ai-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:blink 1.2s infinite; }
-    .ai-dot:nth-child(2) { animation-delay:.2s; }
-    .ai-dot:nth-child(3) { animation-delay:.4s; }
-    @keyframes blink { 0%,80%,100%{opacity:.15} 40%{opacity:1} }
-    .ai-loading-text { font-size:12px; color:var(--text3); margin-left:4px; font-family:var(--font-head); }
     .controls-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
     .view-toggle { display:flex; gap:4px; background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:3px; }
     .toggle-btn {
@@ -236,14 +218,6 @@
       </div>
     </div>
 
-    <div class="ai-box" id="ai-box" style="display:none;">
-      <div class="ai-header">
-        <i class="ti ti-sparkles" style="font-size:14px;color:var(--accent);"></i>
-        <span class="ai-label">Análisis IA</span>
-      </div>
-      <div id="ai-content"></div>
-    </div>
-
     <div id="view-games">
       <div class="section-label" id="games-label"><i class="ti ti-circle-check"></i> Resultados recientes</div>
       <div class="games-grid" id="games-final"></div>
@@ -268,7 +242,6 @@
 <footer>Actualización automática cada 60 s &nbsp;·&nbsp; Frelytics © 2026</footer>
 
 <script>
-// ── ÚNICA LÍNEA CAMBIADA: apunta al proxy de Vercel en vez de a la API directamente ──
 const FD_BASE = '/api/football?path=';
 
 const LEAGUES = {
@@ -286,7 +259,6 @@ let currentLeague = 'ucl';
 let currentView   = 'games';
 let games         = [];
 
-// ── FUNCIÓN CAMBIADA: usa el proxy, sin headers desde el browser ──
 async function fdFetch(path) {
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   if (CACHE[cleanPath]) return CACHE[cleanPath];
@@ -375,8 +347,6 @@ async function loadData() {
         '</tr>';
     }).join('');
 
-    triggerAI(finished, upcoming, rows, league);
-
   } catch(e) {
     console.error(e);
     document.getElementById('games-final').innerHTML =
@@ -414,41 +384,6 @@ function switchView(view) {
   document.getElementById('btn-standings').classList.toggle('active', view === 'standings');
 }
 
-async function triggerAI(finished, upcoming, table, league) {
-  const box     = document.getElementById('ai-box');
-  const content = document.getElementById('ai-content');
-  box.style.display = 'block';
-  content.innerHTML = '<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div><span class="ai-loading-text">Generando análisis…</span></div>';
-
-  const results = finished.slice(-3).map(m =>
-    (m.homeTeam.shortName||m.homeTeam.name) + ' ' +
-    m.score?.fullTime?.home + '-' + m.score?.fullTime?.away + ' ' +
-    (m.awayTeam.shortName||m.awayTeam.name)
-  ).join(', ');
-  const next   = upcoming.slice(0, 2).map(m =>
-    (m.homeTeam.shortName||m.homeTeam.name) + ' vs ' + (m.awayTeam.shortName||m.awayTeam.name)
-  ).join(', ');
-  const leader = table[0];
-
-  const prompt = 'Eres un analista de fútbol experto. Con estos datos de ' + league.name + ':\n' +
-    'Resultados recientes: ' + (results || 'no disponibles') + '.\n' +
-    'Próximos partidos: ' + (next || 'no disponibles') + '.\n' +
-    'Líder actual: ' + (leader ? (leader.team?.shortName||leader.team?.name) + ' con ' + leader.points + ' pts' : 'desconocido') + '.\n' +
-    'Escribe un análisis breve (60-80 palabras) sobre el momento actual de la liga. En español, sin emojis ni markdown.';
-
-  try {
-    const res  = await fetch('/api/anthropic', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
-    });
-    const data = await res.json();
-    content.innerHTML = '<p class="ai-text">' + (data.content?.[0]?.text || 'Análisis no disponible.') + '</p>';
-  } catch(e) {
-    content.innerHTML = '<p class="ai-text" style="color:var(--text3)">Análisis IA no disponible.</p>';
-  }
-}
-
 document.getElementById('search-input').addEventListener('input', function() {
   const q    = this.value.trim().toLowerCase();
   const wrap = document.getElementById('search-results-wrap');
@@ -477,10 +412,8 @@ document.getElementById('search-input').addEventListener('input', function() {
   }).join('');
 });
 
-// Auto-refresh cada 60s
 setInterval(() => {
-  const league = LEAGUES[currentLeague];
-  const key = 'competitions/' + league.id + '/matches?status=FINISHED,SCHEDULED,IN_PLAY,PAUSED,HALFTIME&limit=20';
+  const key = 'competitions/' + LEAGUES[currentLeague].id + '/matches?status=FINISHED,SCHEDULED,IN_PLAY,PAUSED,HALFTIME&limit=20';
   delete CACHE[key];
   loadData();
 }, 60000);
