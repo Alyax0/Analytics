@@ -260,22 +260,16 @@ async function loadData() {
   const league = LEAGUES[currentLeague];
   try {
     // Traer partidos recientes (últimos 7 días) y próximos (next 7)
-    const today = new Date();
-    const from  = new Date(today); from.setDate(from.getDate() - 7);
-    const to    = new Date(today); to.setDate(to.getDate() + 7);
-    const fmt   = d => d.toISOString().split('T')[0];
-
-    const [fixturesData, standingsData] = await Promise.all([
-      apiFetch('fixtures', { league: league.id, season: league.season, from: fmt(from), to: fmt(to) }),
+    const [lastData, nextData, standingsData] = await Promise.all([
+      apiFetch('fixtures', { league: league.id, season: league.season, last: 8 }),
+      apiFetch('fixtures', { league: league.id, season: league.season, next: 8 }),
       apiFetch('standings', { league: league.id, season: league.season })
     ]);
 
-    const fixtures = fixturesData.response || [];
-    games = fixtures;
-
-    const finished = fixtures.filter(f => f.fixture.status.short === 'FT' || f.fixture.status.short === 'AET' || f.fixture.status.short === 'PEN');
-    const live     = fixtures.filter(f => ['1H','2H','HT','ET','P'].includes(f.fixture.status.short));
-    const upcoming = fixtures.filter(f => f.fixture.status.short === 'NS');
+    const finished = lastData.response || [];
+    const upcoming = nextData.response || [];
+    const live     = [];
+    games = [...finished, ...upcoming];
 
     const finEl = document.getElementById('games-final');
     const upEl  = document.getElementById('games-upcoming');
