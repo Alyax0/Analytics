@@ -374,7 +374,7 @@ document.getElementById('search-input').addEventListener('input', function() {
   }).join('');
 });
 
-setInterval(() => { CACHE = {}; loadData(); }, 60000);
+setInterval(() => { Object.keys(CACHE).forEach(k => delete CACHE[k]); loadData(); }, 60000);
 
 renderTabs();
 document.getElementById('games-final').innerHTML    = skel(3);
