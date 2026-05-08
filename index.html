@@ -437,7 +437,7 @@ async function triggerAI(finished, upcoming, table, league) {
     'Escribe un análisis breve (60-80 palabras) sobre el momento actual de la liga. En español, sin emojis ni markdown.';
 
   try {
-    const res  = await fetch('https://api.anthropic.com/v1/messages', {
+    const res  = await fetch('/api/anthropic', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{ role: 'user', content: prompt }] })
