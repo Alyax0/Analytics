@@ -27,18 +27,9 @@
       content:''; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.4;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
     }
-    nav {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:0 32px; height:60px; border-bottom:1px solid var(--border);
-      background:rgba(8,10,14,0.85); backdrop-filter:blur(20px);
-      position:sticky; top:0; z-index:200;
-    }
+    nav { display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:60px; border-bottom:1px solid var(--border); background:rgba(8,10,14,0.85); backdrop-filter:blur(20px); position:sticky; top:0; z-index:200; }
     .nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
-    .logo-icon {
-      width:32px; height:32px; border-radius:9px; background:var(--accent);
-      display:flex; align-items:center; justify-content:center;
-      color:var(--bg); font-size:16px; box-shadow:0 0 20px rgba(0,229,160,0.35);
-    }
+    .logo-icon { width:32px; height:32px; border-radius:9px; background:var(--accent); display:flex; align-items:center; justify-content:center; color:var(--bg); font-size:16px; box-shadow:0 0 20px rgba(0,229,160,0.35); }
     .logo-text { font-family:var(--font-head); font-size:16px; font-weight:800; color:var(--text); letter-spacing:-0.5px; }
     .beta { font-size:9px; font-weight:700; letter-spacing:0.1em; background:var(--accent2); color:var(--accent); padding:2px 7px; border-radius:20px; border:1px solid var(--accent3); font-family:var(--font-head); }
     .nav-links { display:flex; gap:2px; }
@@ -129,7 +120,6 @@
   </style>
 </head>
 <body>
-
 <nav>
   <a class="nav-logo" href="#">
     <div class="logo-icon"><i class="ti ti-ball-football"></i></div>
@@ -137,9 +127,7 @@
     <span class="beta">BETA</span>
   </a>
   <div class="nav-links">
-    <a href="#">NBA</a>
-    <a href="#">MLB</a>
-    <a href="#" class="active">FUT</a>
+    <a href="#">NBA</a><a href="#">MLB</a><a href="#" class="active">FUT</a>
   </div>
   <div class="nav-right">
     <div class="live-pill"><div class="live-dot"></div> EN VIVO</div>
@@ -166,29 +154,21 @@
     <div class="leagues-scroll" id="leagues-tabs"></div>
     <div class="controls-row">
       <div class="view-toggle">
-        <button class="toggle-btn active" id="btn-games" onclick="switchView('games')">
-          <i class="ti ti-calendar-event"></i> Partidos
-        </button>
-        <button class="toggle-btn" id="btn-standings" onclick="switchView('standings')">
-          <i class="ti ti-list-numbers"></i> Tabla
-        </button>
+        <button class="toggle-btn active" id="btn-games" onclick="switchView('games')"><i class="ti ti-calendar-event"></i> Partidos</button>
+        <button class="toggle-btn" id="btn-standings" onclick="switchView('standings')"><i class="ti ti-list-numbers"></i> Tabla</button>
       </div>
     </div>
-
     <div id="view-games">
       <div class="section-label" id="games-label"><i class="ti ti-circle-check"></i> Resultados recientes</div>
       <div class="games-grid" id="games-final"></div>
       <div class="section-label" id="upcoming-label"><i class="ti ti-calendar"></i> Próximos partidos</div>
       <div class="games-grid" id="games-upcoming"></div>
     </div>
-
     <div id="view-standings" style="display:none;">
       <div class="section-label"><i class="ti ti-list-numbers"></i> Tabla de posiciones</div>
       <div class="standings-wrap">
         <table class="standings-table">
-          <thead>
-            <tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>Pts</th></tr>
-          </thead>
+          <thead><tr><th>#</th><th>Equipo</th><th>PJ</th><th>G</th><th>E</th><th>P</th><th>GF</th><th>GC</th><th>Pts</th></tr></thead>
           <tbody id="standings-body"></tbody>
         </table>
       </div>
@@ -196,41 +176,53 @@
   </div>
 </main>
 
-<footer>Actualización automática cada 60 s &nbsp;·&nbsp; Frelytics © 2026</footer>
+<footer>Actualización automática cada 5 min &nbsp;·&nbsp; Frelytics © 2026</footer>
 
 <script>
-// Liga ID, temporada actual 2024
+// ── TEMPORADAS CORRECTAS (mayo 2026) ──────────────────────────
+// EPL/LaLiga/Bundesliga/SerieA/Ligue1 van de ago a mayo → temporada 2025
+// MLS/LigaMX van de feb a dic → temporada 2025
+// UCL va de sep a mayo → temporada 2024 (final fue mayo 2025) → ahora 2025
 const LEAGUES = {
-  epl:        { id: 39,   name: 'Premier League',    flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', season: 2024 },
-  laliga:     { id: 140,  name: 'La Liga',           flag: '🇪🇸', season: 2024 },
-  bundesliga: { id: 78,   name: 'Bundesliga',        flag: '🇩🇪', season: 2024 },
-  serie_a:    { id: 135,  name: 'Serie A',           flag: '🇮🇹', season: 2024 },
-  ligue1:     { id: 61,   name: 'Ligue 1',           flag: '🇫🇷', season: 2024 },
-  ucl:        { id: 2,    name: 'Champions League',  flag: '⭐', season: 2024 },
-  mls:        { id: 253,  name: 'MLS',               flag: '🇺🇸', season: 2025 },
-  liga_mx:    { id: 262,  name: 'Liga MX',           flag: '🇲🇽', season: 2025 },
+  epl:        { id: 39,  name: 'Premier League',   flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', season: 2024 },
+  laliga:     { id: 140, name: 'La Liga',          flag: '🇪🇸',        season: 2024 },
+  bundesliga: { id: 78,  name: 'Bundesliga',       flag: '🇩🇪',        season: 2024 },
+  serie_a:    { id: 135, name: 'Serie A',          flag: '🇮🇹',        season: 2024 },
+  ligue1:     { id: 61,  name: 'Ligue 1',          flag: '🇫🇷',        season: 2024 },
+  ucl:        { id: 2,   name: 'Champions League', flag: '⭐',          season: 2024 },
+  mls:        { id: 253, name: 'MLS',              flag: '🇺🇸',        season: 2025 },
+  liga_mx:    { id: 262, name: 'Liga MX',          flag: '🇲🇽',        season: 2025 },
 };
-// Nota: EPL/LaLiga/Bundesliga/SerieA/Ligue1/UCL terminan en mayo-junio 2025
 
 const CACHE = {};
 let currentLeague = 'epl';
 let currentView   = 'games';
 let games         = [];
 
+// ── Proxy fetch — usa cache 5 minutos ──────────────────────────
 async function apiFetch(endpoint, params) {
-  const key = endpoint + JSON.stringify(params);
-  if (CACHE[key]) return CACHE[key];
+  const cacheKey = endpoint + JSON.stringify(params);
+  const cached   = CACHE[cacheKey];
+  if (cached && Date.now() - cached.ts < 5 * 60 * 1000) return cached.data;
+
   const qs  = new URLSearchParams(params).toString();
-  const url = '/api/football?endpoint=' + encodeURIComponent(endpoint) + '&' + qs;
+  const url = '/api/football?endpoint=' + encodeURIComponent(endpoint) + (qs ? '&' + qs : '');
   const res = await fetch(url);
   if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
   const data = await res.json();
-  CACHE[key] = data;
+
+  // Si la API devuelve error de cuota u otro error
+  if (data.errors && Object.keys(data.errors).length > 0) {
+    const errMsg = JSON.stringify(data.errors);
+    throw new Error('API error: ' + errMsg);
+  }
+
+  CACHE[cacheKey] = { data, ts: Date.now() };
   return data;
 }
 
 function formatDate(d) {
-  const dt   = new Date(d);
+  const dt    = new Date(d);
   const dias  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   return dias[dt.getDay()] + ' ' + dt.getDate() + ' ' + meses[dt.getMonth()];
@@ -259,18 +251,14 @@ async function selectLeague(key) {
 
 async function loadData() {
   const league = LEAGUES[currentLeague];
-  try {
-    // Traer partidos recientes (últimos 7 días) y próximos (next 7)
-    // Calcular rango de fechas según la temporada
-    const seasonEnd = new Date(league.season + 1, 5, 30); // junio del año siguiente
-    const seasonStart = new Date(league.season, 6, 1);    // julio del año de inicio
-    const now = new Date();
-    // Si la temporada ya terminó, mostrar últimos y primeros partidos de la misma
-    const refDate = now < seasonEnd ? now : seasonEnd;
-    const from = new Date(refDate); from.setDate(from.getDate() - 30);
-    const to   = new Date(refDate); to.setDate(to.getDate() + 14);
-    const fmt  = d => d.toISOString().split('T')[0];
+  const now    = new Date();
 
+  // Rango amplio: 60 días atrás y 30 días adelante para no quedarnos sin partidos
+  const from = new Date(now); from.setDate(from.getDate() - 60);
+  const to   = new Date(now); to.setDate(to.getDate() + 30);
+  const fmt  = d => d.toISOString().split('T')[0];
+
+  try {
     const [fixturesData, standingsData] = await Promise.all([
       apiFetch('fixtures', { league: league.id, season: league.season, from: fmt(from), to: fmt(to) }),
       apiFetch('standings', { league: league.id, season: league.season })
@@ -278,9 +266,10 @@ async function loadData() {
 
     const fixtures = fixturesData.response || [];
     games = fixtures;
-    const finished = fixtures.filter(f => ['FT','AET','PEN'].includes(f.fixture.status.short));
-    const live     = fixtures.filter(f => ['1H','2H','HT','ET','P'].includes(f.fixture.status.short));
-    const upcoming = fixtures.filter(f => f.fixture.status.short === 'NS');
+
+    const finished = fixtures.filter(f => ['FT','AET','PEN'].includes(f.fixture.status.short)).slice(-8);
+    const live     = fixtures.filter(f => ['1H','2H','HT','ET','P','LIVE'].includes(f.fixture.status.short));
+    const upcoming = fixtures.filter(f => f.fixture.status.short === 'NS').slice(0, 8);
 
     const finEl = document.getElementById('games-final');
     const upEl  = document.getElementById('games-upcoming');
@@ -296,34 +285,36 @@ async function loadData() {
     document.getElementById('games-label').innerHTML    = '<i class="ti ti-circle-check"></i> Resultados recientes — ' + league.flag + ' ' + league.name;
     document.getElementById('upcoming-label').innerHTML = '<i class="ti ti-calendar"></i> Próximos partidos — ' + league.flag + ' ' + league.name;
 
-    // Standings
+    // Tabla de posiciones
     const standingsArr = standingsData.response?.[0]?.league?.standings?.[0] || [];
-    document.getElementById('standings-body').innerHTML = standingsArr.map(t => {
-      const p  = t.rank;
-      const bc = p===1?'pos-1':p===2?'pos-2':p===3?'pos-3':'pos-n';
-      return '<tr>' +
-        '<td><span class="pos-badge ' + bc + '">' + p + '</span></td>' +
-        '<td class="team-td">' + t.team.name + '</td>' +
-        '<td>' + t.all.played + '</td>' +
-        '<td>' + t.all.win + '</td>' +
-        '<td>' + t.all.draw + '</td>' +
-        '<td>' + t.all.lose + '</td>' +
-        '<td>' + t.all.goals.for + '</td>' +
-        '<td>' + t.all.goals.against + '</td>' +
-        '<td class="pts">' + t.points + '</td>' +
-        '</tr>';
-    }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">Sin datos de tabla</td></tr>';
+    document.getElementById('standings-body').innerHTML = standingsArr.length
+      ? standingsArr.map(t => {
+          const p  = t.rank;
+          const bc = p===1?'pos-1':p===2?'pos-2':p===3?'pos-3':'pos-n';
+          return '<tr>' +
+            '<td><span class="pos-badge ' + bc + '">' + p + '</span></td>' +
+            '<td class="team-td">' + t.team.name + '</td>' +
+            '<td>' + t.all.played + '</td>' +
+            '<td>' + t.all.win + '</td>' +
+            '<td>' + t.all.draw + '</td>' +
+            '<td>' + t.all.lose + '</td>' +
+            '<td>' + t.all.goals.for + '</td>' +
+            '<td>' + t.all.goals.against + '</td>' +
+            '<td class="pts">' + t.points + '</td>' +
+            '</tr>';
+        }).join('')
+      : '<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:20px">Sin datos de tabla</td></tr>';
 
   } catch(e) {
     console.error(e);
     document.getElementById('games-final').innerHTML =
-      '<div class="empty"><i class="ti ti-wifi-off"></i><span>Error al cargar datos: ' + e.message + '</span></div>';
+      '<div class="empty"><i class="ti ti-wifi-off"></i><span>Error: ' + e.message + '</span></div>';
   }
 }
 
 function gameCard(f, league, idx) {
   const short   = f.fixture.status.short;
-  const isLive  = ['1H','2H','HT','ET','P'].includes(short);
+  const isLive  = ['1H','2H','HT','ET','P','LIVE'].includes(short);
   const isFinal = ['FT','AET','PEN'].includes(short);
   const st      = isFinal ? 'final' : isLive ? 'live' : 'scheduled';
   const label   = isFinal ? 'FIN' : isLive ? '● ' + (f.fixture.status.elapsed || '') + "'" : 'Próximo';
@@ -379,7 +370,8 @@ document.getElementById('search-input').addEventListener('input', function() {
   }).join('');
 });
 
-setInterval(() => { Object.keys(CACHE).forEach(k => delete CACHE[k]); loadData(); }, 60000);
+// Auto-refresh cada 5 minutos (ahorra requests vs 60s)
+setInterval(() => { Object.keys(CACHE).forEach(k => delete CACHE[k]); loadData(); }, 5 * 60 * 1000);
 
 renderTabs();
 document.getElementById('games-final').innerHTML    = skel(3);
