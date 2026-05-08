@@ -210,6 +210,7 @@ const LEAGUES = {
   mls:        { id: 253,  name: 'MLS',               flag: '🇺🇸', season: 2025 },
   liga_mx:    { id: 262,  name: 'Liga MX',           flag: '🇲🇽', season: 2025 },
 };
+// Nota: EPL/LaLiga/Bundesliga/SerieA/Ligue1/UCL terminan en mayo-junio 2025
 
 const CACHE = {};
 let currentLeague = 'epl';
@@ -260,16 +261,26 @@ async function loadData() {
   const league = LEAGUES[currentLeague];
   try {
     // Traer partidos recientes (últimos 7 días) y próximos (next 7)
-    const [lastData, nextData, standingsData] = await Promise.all([
-      apiFetch('fixtures', { league: league.id, season: league.season, last: 8 }),
-      apiFetch('fixtures', { league: league.id, season: league.season, next: 8 }),
+    // Calcular rango de fechas según la temporada
+    const seasonEnd = new Date(league.season + 1, 5, 30); // junio del año siguiente
+    const seasonStart = new Date(league.season, 6, 1);    // julio del año de inicio
+    const now = new Date();
+    // Si la temporada ya terminó, mostrar últimos y primeros partidos de la misma
+    const refDate = now < seasonEnd ? now : seasonEnd;
+    const from = new Date(refDate); from.setDate(from.getDate() - 30);
+    const to   = new Date(refDate); to.setDate(to.getDate() + 14);
+    const fmt  = d => d.toISOString().split('T')[0];
+
+    const [fixturesData, standingsData] = await Promise.all([
+      apiFetch('fixtures', { league: league.id, season: league.season, from: fmt(from), to: fmt(to) }),
       apiFetch('standings', { league: league.id, season: league.season })
     ]);
 
-    const finished = lastData.response || [];
-    const upcoming = nextData.response || [];
-    const live     = [];
-    games = [...finished, ...upcoming];
+    const fixtures = fixturesData.response || [];
+    games = fixtures;
+    const finished = fixtures.filter(f => ['FT','AET','PEN'].includes(f.fixture.status.short));
+    const live     = fixtures.filter(f => ['1H','2H','HT','ET','P'].includes(f.fixture.status.short));
+    const upcoming = fixtures.filter(f => f.fixture.status.short === 'NS');
 
     const finEl = document.getElementById('games-final');
     const upEl  = document.getElementById('games-upcoming');
