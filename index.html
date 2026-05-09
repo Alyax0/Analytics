@@ -244,7 +244,7 @@ async function loadData() {
 
   try {
     const [matchData, standData] = await Promise.all([
-      apiFetch('competitions/' + league.id + '/matches?status=FINISHED,SCHEDULED,IN_PLAY,PAUSED,HALFTIME&limit=30'),
+      apiFetch('competitions/' + league.id + '/matches?limit=30'),
       apiFetch('competitions/' + league.id + '/standings')
     ]);
 
