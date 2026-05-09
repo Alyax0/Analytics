@@ -53,12 +53,14 @@
     .game-status.scheduled { background:var(--accent2); color:var(--accent); border:1px solid var(--accent3); }
     .game-status.live { background:rgba(255,77,77,0.12); color:var(--red); border:1px solid rgba(255,77,77,0.25); }
     .game-teams { display:flex; align-items:center; gap:8px; }
-    .team-block { flex:1; min-width:0; }
-    .team-block.right { text-align:right; }
+    .team-block { flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
+    .team-block.right { align-items:flex-end; text-align:right; }
+    .team-logo { width:36px; height:36px; object-fit:contain; }
+    .team-name { font-size:12px; font-weight:600; color:var(--text); font-family:var(--font-head); line-height:1.3; }
     .team-name { font-size:12px; font-weight:700; color:var(--text); font-family:var(--font-head); }
     .team-record { font-size:10px; color:var(--text3); }
     .score-block { text-align:center; min-width:72px; flex-shrink:0; }
-    .score-main { font-size:20px; font-weight:800; color:var(--text); letter-spacing:2px; font-family:var(--font-head); }
+    .score-main { font-size:22px; font-weight:800; color:var(--text); letter-spacing:3px; font-family:var(--font-head); }
     .score-vs { font-size:12px; color:var(--text3); font-weight:600; font-family:var(--font-head); }
     .score-period { font-size:10px; color:var(--red); font-weight:600; font-family:var(--font-head); margin-top:2px; }
     .game-footer { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
@@ -253,14 +255,23 @@ function gameCard(g, idx) {
     ? '<div class="score-main">' + g.home_team_score + ' – ' + g.visitor_team_score + '</div>'
     : '<div class="score-vs">VS</div>';
 
-  const home = g.home_team.abbreviation || g.home_team.full_name;
-  const away = g.visitor_team.abbreviation || g.visitor_team.full_name;
+  const homeName = g.home_team.full_name;
+  const awayName = g.visitor_team.full_name;
+  const homeLogo = 'https://cdn.nba.com/logos/nba/' + g.home_team.id + '/global/L/logo.svg';
+  const awayLogo = 'https://cdn.nba.com/logos/nba/' + g.visitor_team.id + '/global/L/logo.svg';
+
   return '<div class="game-card ' + (isLive ? 'live' : '') + '" style="animation-delay:' + (idx*40) + 'ms">' +
     '<div class="game-header"><span class="game-league">NBA</span><span class="game-status ' + st + '">' + label + '</span></div>' +
     '<div class="game-teams">' +
-      '<div class="team-block"><div class="team-name">' + home + '</div></div>' +
+      '<div class="team-block">' +
+        '<img src="' + homeLogo + '" class="team-logo" onerror="this.style.display='none'" />' +
+        '<div class="team-name">' + homeName + '</div>' +
+      '</div>' +
       '<div class="score-block">' + scoreHtml + '</div>' +
-      '<div class="team-block right"><div class="team-name">' + away + '</div></div>' +
+      '<div class="team-block right">' +
+        '<img src="' + awayLogo + '" class="team-logo" onerror="this.style.display='none'" />' +
+        '<div class="team-name">' + awayName + '</div>' +
+      '</div>' +
     '</div>' +
     '<div class="game-footer"><span class="game-time">' + formatDate(g.date) + '</span></div>' +
     '</div>';
