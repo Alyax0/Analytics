@@ -179,8 +179,6 @@
 <footer>Actualización automática cada 5 min &nbsp;·&nbsp; Frelytics © 2026</footer>
 
 <script>
-// football-data.org — temporada actual incluida en plan free
-// IDs de competición de football-data.org (diferentes a api-sports)
 const LEAGUES = {
   epl:        { id: 'PL',  name: 'Premier League',   flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
   laliga:     { id: 'PD',  name: 'La Liga',          flag: '🇪🇸' },
@@ -196,17 +194,15 @@ let currentLeague = 'epl';
 let currentView   = 'games';
 let games         = [];
 
-// Llama al proxy /api/football?path=competitions/PL/matches...
+function fmt(d) { return d.toISOString().split('T')[0]; }
+
 async function apiFetch(path) {
   const cached = CACHE[path];
   if (cached && Date.now() - cached.ts < 5 * 60 * 1000) return cached.data;
-
   const res  = await fetch('/api/football?path=' + encodeURIComponent(path));
   if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
   const data = await res.json();
-
   if (data.errorCode) throw new Error(data.message || 'Error de API');
-
   CACHE[path] = { data, ts: Date.now() };
   return data;
 }
@@ -241,18 +237,29 @@ async function selectLeague(key) {
 
 async function loadData() {
   const league = LEAGUES[currentLeague];
+  const now    = new Date();
+
+  // Partidos recientes: últimos 14 días
+  const fromPast = new Date(now); fromPast.setDate(fromPast.getDate() - 14);
+  // Próximos: hasta 30 días adelante
+  const toFuture = new Date(now); toFuture.setDate(toFuture.getDate() + 30);
 
   try {
-    const [matchData, standData] = await Promise.all([
-      apiFetch('competitions/' + league.id + '/matches?limit=30'),
+    // Hacemos 2 llamadas separadas con dateFrom/dateTo para traer
+    // partidos cercanos a HOY, no desde el inicio de la temporada
+    const [pastData, futureData, standData] = await Promise.all([
+      apiFetch('competitions/' + league.id + '/matches?dateFrom=' + fmt(fromPast) + '&dateTo=' + fmt(now)),
+      apiFetch('competitions/' + league.id + '/matches?dateFrom=' + fmt(now) + '&dateTo=' + fmt(toFuture)),
       apiFetch('competitions/' + league.id + '/standings')
     ]);
 
-    const all      = matchData.matches || [];
-    games          = all;
-    const finished = all.filter(m => m.status === 'FINISHED').slice(-8);
-    const live     = all.filter(m => ['IN_PLAY','PAUSED','HALFTIME'].includes(m.status));
-    const upcoming = all.filter(m => m.status === 'SCHEDULED').slice(0, 8);
+    const pastMatches   = pastData.matches   || [];
+    const futureMatches = futureData.matches || [];
+    games = [...pastMatches, ...futureMatches];
+
+    const finished = pastMatches.filter(m => m.status === 'FINISHED');
+    const live     = [...pastMatches, ...futureMatches].filter(m => ['IN_PLAY','PAUSED','HALFTIME'].includes(m.status));
+    const upcoming = futureMatches.filter(m => ['TIMED','SCHEDULED'].includes(m.status)).slice(0, 9);
 
     const finEl = document.getElementById('games-final');
     const upEl  = document.getElementById('games-upcoming');
@@ -268,7 +275,6 @@ async function loadData() {
     document.getElementById('games-label').innerHTML    = '<i class="ti ti-circle-check"></i> Resultados recientes — ' + league.flag + ' ' + league.name;
     document.getElementById('upcoming-label').innerHTML = '<i class="ti ti-calendar"></i> Próximos partidos — ' + league.flag + ' ' + league.name;
 
-    // Standings — football-data.org estructura diferente
     const table = (standData.standings || []).find(s => s.type === 'TOTAL');
     const rows  = table ? table.table : [];
     document.getElementById('standings-body').innerHTML = rows.length
