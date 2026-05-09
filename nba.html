@@ -222,8 +222,8 @@ async function loadGames() {
   const from  = fmt(past);
 
   try {
-    const data = await apiFetch('/games?dates[]=' + today + '&per_page=100');
-    const recent = await apiFetch('/games?start_date=' + from + '&end_date=' + today + '&per_page=20');
+    const data = await apiFetch('/games?dates%5B%5D=' + today + '&per_page=100');
+    const recent = await apiFetch('/games?start_date=' + from + '&end_date=' + today + '&per_page=20&sort=date&direction=desc');
 
     const todayGames  = data.data || [];
     const recentGames = (recent.data || []).filter(g => g.status === 'Final').slice(-9);
