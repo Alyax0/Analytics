@@ -179,15 +179,16 @@
 <footer>Actualización automática cada 5 min &nbsp;·&nbsp; Frelytics © 2026</footer>
 
 <script>
+// football-data.org — temporada actual incluida en plan free
+// IDs de competición de football-data.org (diferentes a api-sports)
 const LEAGUES = {
-  epl:        { id: 39,  name: 'Premier League',   flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', season: 2025 },
-  laliga:     { id: 140, name: 'La Liga',          flag: '🇪🇸',        season: 2025 },
-  bundesliga: { id: 78,  name: 'Bundesliga',       flag: '🇩🇪',        season: 2025 },
-  serie_a:    { id: 135, name: 'Serie A',          flag: '🇮🇹',        season: 2025 },
-  ligue1:     { id: 61,  name: 'Ligue 1',          flag: '🇫🇷',        season: 2025 },
-  ucl:        { id: 2,   name: 'Champions League', flag: '⭐',          season: 2024 },
-  mls:        { id: 253, name: 'MLS',              flag: '🇺🇸',        season: 2025 },
-  liga_mx:    { id: 262, name: 'Liga MX',          flag: '🇲🇽',        season: 2025 },
+  epl:        { id: 'PL',  name: 'Premier League',   flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿' },
+  laliga:     { id: 'PD',  name: 'La Liga',          flag: '🇪🇸' },
+  bundesliga: { id: 'BL1', name: 'Bundesliga',       flag: '🇩🇪' },
+  serie_a:    { id: 'SA',  name: 'Serie A',          flag: '🇮🇹' },
+  ligue1:     { id: 'FL1', name: 'Ligue 1',          flag: '🇫🇷' },
+  ucl:        { id: 'CL',  name: 'Champions League', flag: '⭐' },
+  eredivisie: { id: 'DED', name: 'Eredivisie',       flag: '🇳🇱' },
 };
 
 const CACHE = {};
@@ -195,22 +196,18 @@ let currentLeague = 'epl';
 let currentView   = 'games';
 let games         = [];
 
-async function apiFetch(endpoint, params) {
-  const cacheKey = endpoint + JSON.stringify(params);
-  const cached   = CACHE[cacheKey];
+// Llama al proxy /api/football?path=competitions/PL/matches...
+async function apiFetch(path) {
+  const cached = CACHE[path];
   if (cached && Date.now() - cached.ts < 5 * 60 * 1000) return cached.data;
 
-  const qs  = new URLSearchParams(params).toString();
-  const url = '/api/football?endpoint=' + encodeURIComponent(endpoint) + (qs ? '&' + qs : '');
-  const res = await fetch(url);
+  const res  = await fetch('/api/football?path=' + encodeURIComponent(path));
   if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
   const data = await res.json();
 
-  if (data.errors && Object.keys(data.errors).length > 0) {
-    throw new Error('API error: ' + JSON.stringify(data.errors));
-  }
+  if (data.errorCode) throw new Error(data.message || 'Error de API');
 
-  CACHE[cacheKey] = { data, ts: Date.now() };
+  CACHE[path] = { data, ts: Date.now() };
   return data;
 }
 
@@ -244,52 +241,49 @@ async function selectLeague(key) {
 
 async function loadData() {
   const league = LEAGUES[currentLeague];
-  const now    = new Date();
-  const from   = new Date(now); from.setDate(from.getDate() - 60);
-  const to     = new Date(now); to.setDate(to.getDate() + 30);
-  const fmt    = d => d.toISOString().split('T')[0];
 
   try {
-    const [fixturesData, standingsData] = await Promise.all([
-      apiFetch('fixtures', { league: league.id, season: league.season, from: fmt(from), to: fmt(to) }),
-      apiFetch('standings', { league: league.id, season: league.season })
+    const [matchData, standData] = await Promise.all([
+      apiFetch('competitions/' + league.id + '/matches?status=FINISHED,SCHEDULED,IN_PLAY,PAUSED,HALFTIME&limit=30'),
+      apiFetch('competitions/' + league.id + '/standings')
     ]);
 
-    const fixtures = fixturesData.response || [];
-    games = fixtures;
-
-    const finished = fixtures.filter(f => ['FT','AET','PEN'].includes(f.fixture.status.short)).slice(-8);
-    const live     = fixtures.filter(f => ['1H','2H','HT','ET','P','LIVE'].includes(f.fixture.status.short));
-    const upcoming = fixtures.filter(f => f.fixture.status.short === 'NS').slice(0, 8);
+    const all      = matchData.matches || [];
+    games          = all;
+    const finished = all.filter(m => m.status === 'FINISHED').slice(-8);
+    const live     = all.filter(m => ['IN_PLAY','PAUSED','HALFTIME'].includes(m.status));
+    const upcoming = all.filter(m => m.status === 'SCHEDULED').slice(0, 8);
 
     const finEl = document.getElementById('games-final');
     const upEl  = document.getElementById('games-upcoming');
 
     finEl.innerHTML = finished.length
-      ? finished.map((f, i) => gameCard(f, league, i)).join('')
+      ? finished.map((m, i) => gameCard(m, league, i)).join('')
       : '<div class="empty"><i class="ti ti-calendar-off"></i><span>Sin resultados recientes</span></div>';
 
     upEl.innerHTML = (live.length + upcoming.length)
-      ? [...live, ...upcoming].map((f, i) => gameCard(f, league, i)).join('')
+      ? [...live, ...upcoming].map((m, i) => gameCard(m, league, i)).join('')
       : '<div class="empty"><i class="ti ti-calendar-off"></i><span>Sin partidos programados</span></div>';
 
     document.getElementById('games-label').innerHTML    = '<i class="ti ti-circle-check"></i> Resultados recientes — ' + league.flag + ' ' + league.name;
     document.getElementById('upcoming-label').innerHTML = '<i class="ti ti-calendar"></i> Próximos partidos — ' + league.flag + ' ' + league.name;
 
-    const standingsArr = standingsData.response?.[0]?.league?.standings?.[0] || [];
-    document.getElementById('standings-body').innerHTML = standingsArr.length
-      ? standingsArr.map(t => {
-          const p  = t.rank;
+    // Standings — football-data.org estructura diferente
+    const table = (standData.standings || []).find(s => s.type === 'TOTAL');
+    const rows  = table ? table.table : [];
+    document.getElementById('standings-body').innerHTML = rows.length
+      ? rows.map(t => {
+          const p  = t.position;
           const bc = p===1?'pos-1':p===2?'pos-2':p===3?'pos-3':'pos-n';
           return '<tr>' +
             '<td><span class="pos-badge ' + bc + '">' + p + '</span></td>' +
-            '<td class="team-td">' + t.team.name + '</td>' +
-            '<td>' + t.all.played + '</td>' +
-            '<td>' + t.all.win + '</td>' +
-            '<td>' + t.all.draw + '</td>' +
-            '<td>' + t.all.lose + '</td>' +
-            '<td>' + t.all.goals.for + '</td>' +
-            '<td>' + t.all.goals.against + '</td>' +
+            '<td class="team-td">' + (t.team.shortName || t.team.name) + '</td>' +
+            '<td>' + t.playedGames + '</td>' +
+            '<td>' + t.won + '</td>' +
+            '<td>' + t.draw + '</td>' +
+            '<td>' + t.lost + '</td>' +
+            '<td>' + t.goalsFor + '</td>' +
+            '<td>' + t.goalsAgainst + '</td>' +
             '<td class="pts">' + t.points + '</td>' +
             '</tr>';
         }).join('')
@@ -302,14 +296,13 @@ async function loadData() {
   }
 }
 
-function gameCard(f, league, idx) {
-  const short   = f.fixture.status.short;
-  const isLive  = ['1H','2H','HT','ET','P','LIVE'].includes(short);
-  const isFinal = ['FT','AET','PEN'].includes(short);
+function gameCard(m, league, idx) {
+  const isLive  = ['IN_PLAY','PAUSED','HALFTIME'].includes(m.status);
+  const isFinal = m.status === 'FINISHED';
   const st      = isFinal ? 'final' : isLive ? 'live' : 'scheduled';
-  const label   = isFinal ? 'FIN' : isLive ? '● ' + (f.fixture.status.elapsed || '') + "'" : 'Próximo';
-  const hScore  = f.goals.home;
-  const aScore  = f.goals.away;
+  const label   = isFinal ? 'FIN' : isLive ? '● EN VIVO' : 'Próximo';
+  const hScore  = m.score?.fullTime?.home ?? m.score?.halfTime?.home ?? null;
+  const aScore  = m.score?.fullTime?.away ?? m.score?.halfTime?.away ?? null;
   const scoreHtml = (isFinal || isLive) && hScore !== null
     ? '<div class="score-main">' + hScore + ' – ' + aScore + '</div>'
     : '<div class="score-vs">VS</div>';
@@ -318,11 +311,11 @@ function gameCard(f, league, idx) {
     '<div class="game-header"><span class="game-league">' + league.name + '</span>' +
     '<span class="game-status ' + st + '">' + label + '</span></div>' +
     '<div class="game-teams">' +
-      '<div class="team-block"><div class="team-name">' + f.teams.home.name + '</div></div>' +
+      '<div class="team-block"><div class="team-name">' + (m.homeTeam.shortName || m.homeTeam.name) + '</div></div>' +
       '<div class="score-block">' + scoreHtml + '</div>' +
-      '<div class="team-block right"><div class="team-name">' + f.teams.away.name + '</div></div>' +
+      '<div class="team-block right"><div class="team-name">' + (m.awayTeam.shortName || m.awayTeam.name) + '</div></div>' +
     '</div>' +
-    '<div class="game-footer"><span class="game-time">' + formatDate(f.fixture.date) + '</span></div>' +
+    '<div class="game-footer"><span class="game-time">' + formatDate(m.utcDate) + '</span></div>' +
     '</div>';
 }
 
@@ -342,20 +335,22 @@ document.getElementById('search-input').addEventListener('input', function() {
   if (q.length < 2) { wrap.style.display='none'; main.style.display='block'; return; }
   main.style.display = 'none'; wrap.style.display = 'block';
   const league = LEAGUES[currentLeague];
-  const found  = games.filter(f =>
-    f.teams.home.name.toLowerCase().includes(q) ||
-    f.teams.away.name.toLowerCase().includes(q)
+  const found  = games.filter(m =>
+    (m.homeTeam.name||'').toLowerCase().includes(q) ||
+    (m.awayTeam.name||'').toLowerCase().includes(q) ||
+    (m.homeTeam.shortName||'').toLowerCase().includes(q) ||
+    (m.awayTeam.shortName||'').toLowerCase().includes(q)
   );
   if (!found.length) {
     list.innerHTML = '<div class="empty" style="padding:32px 0"><i class="ti ti-search-off"></i><span>Sin resultados para "' + q + '"</span></div>';
     return;
   }
-  list.innerHTML = found.map(f => {
-    const fin   = ['FT','AET','PEN'].includes(f.fixture.status.short);
-    const score = fin ? f.goals.home + ' – ' + f.goals.away : 'Próximo';
+  list.innerHTML = found.map(m => {
+    const fin   = m.status === 'FINISHED';
+    const score = fin ? (m.score?.fullTime?.home) + ' – ' + (m.score?.fullTime?.away) : 'Próximo';
     return '<div class="result-row"><div>' +
-      '<div class="result-teams">' + f.teams.home.name + ' vs ' + f.teams.away.name + '</div>' +
-      '<div class="result-meta">' + league.flag + ' ' + league.name + ' · ' + formatDate(f.fixture.date) + '</div>' +
+      '<div class="result-teams">' + (m.homeTeam.shortName||m.homeTeam.name) + ' vs ' + (m.awayTeam.shortName||m.awayTeam.name) + '</div>' +
+      '<div class="result-meta">' + league.flag + ' ' + league.name + ' · ' + formatDate(m.utcDate) + '</div>' +
       '</div><div class="result-score">' + score + '</div></div>';
   }).join('');
 });
