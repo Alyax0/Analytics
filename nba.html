@@ -53,12 +53,12 @@
     .game-status.scheduled { background:var(--accent2); color:var(--accent); border:1px solid var(--accent3); }
     .game-status.live { background:rgba(255,77,77,0.12); color:var(--red); border:1px solid rgba(255,77,77,0.25); }
     .game-teams { display:flex; align-items:center; gap:8px; }
-    .team-block { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
-    .team-block.right { align-items:flex-end; text-align:right; }
-    .team-name { font-size:11px; font-weight:600; color:var(--text); font-family:var(--font-head); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px; }
+    .team-block { flex:1; min-width:0; }
+    .team-block.right { text-align:right; }
+    .team-name { font-size:12px; font-weight:700; color:var(--text); font-family:var(--font-head); }
     .team-record { font-size:10px; color:var(--text3); }
     .score-block { text-align:center; min-width:72px; flex-shrink:0; }
-    .score-main { font-size:24px; font-weight:800; color:var(--text); letter-spacing:3px; font-family:var(--font-head); }
+    .score-main { font-size:20px; font-weight:800; color:var(--text); letter-spacing:2px; font-family:var(--font-head); }
     .score-vs { font-size:12px; color:var(--text3); font-weight:600; font-family:var(--font-head); }
     .score-period { font-size:10px; color:var(--red); font-weight:600; font-family:var(--font-head); margin-top:2px; }
     .game-footer { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
@@ -253,12 +253,14 @@ function gameCard(g, idx) {
     ? '<div class="score-main">' + g.home_team_score + ' – ' + g.visitor_team_score + '</div>'
     : '<div class="score-vs">VS</div>';
 
+  const home = g.home_team.abbreviation || g.home_team.full_name;
+  const away = g.visitor_team.abbreviation || g.visitor_team.full_name;
   return '<div class="game-card ' + (isLive ? 'live' : '') + '" style="animation-delay:' + (idx*40) + 'ms">' +
     '<div class="game-header"><span class="game-league">NBA</span><span class="game-status ' + st + '">' + label + '</span></div>' +
     '<div class="game-teams">' +
-      '<div class="team-block"><div class="team-name">' + g.home_team.full_name + '</div></div>' +
+      '<div class="team-block"><div class="team-name">' + home + '</div></div>' +
       '<div class="score-block">' + scoreHtml + '</div>' +
-      '<div class="team-block right"><div class="team-name">' + g.visitor_team.full_name + '</div></div>' +
+      '<div class="team-block right"><div class="team-name">' + away + '</div></div>' +
     '</div>' +
     '<div class="game-footer"><span class="game-time">' + formatDate(g.date) + '</span></div>' +
     '</div>';
@@ -268,7 +270,7 @@ async function loadStandings() {
   document.getElementById('east-body').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Cargando...</td></tr>';
   document.getElementById('west-body').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Cargando...</td></tr>';
   try {
-    const data = await apiFetch('/standings?season=2024');
+    const data = await apiFetch('/standings?season=2024&per_page=100');
     const all  = data.data || [];
     const east = all.filter(t => t.conference === 'East').sort((a,b) => a.conference_rank - b.conference_rank);
     const west = all.filter(t => t.conference === 'West').sort((a,b) => a.conference_rank - b.conference_rank);
@@ -300,31 +302,36 @@ async function loadStandings() {
 async function loadLeaders() {
   document.getElementById('leaders-grid').innerHTML = skel(3);
   try {
-    const data = await apiFetch('/season_averages?season=2024&per_page=100');
-    const players = (data.data || []).filter(p => p.games_played >= 20);
+    // Fetch season averages for top players
+    const [ptsData, rebData, astData, stlData, blkData] = await Promise.all([
+      apiFetch('/season_averages/general?season=2024&sort_by=pts&per_page=5&type=base'),
+      apiFetch('/season_averages/general?season=2024&sort_by=reb&per_page=5&type=base'),
+      apiFetch('/season_averages/general?season=2024&sort_by=ast&per_page=5&type=base'),
+      apiFetch('/season_averages/general?season=2024&sort_by=stl&per_page=5&type=base'),
+      apiFetch('/season_averages/general?season=2024&sort_by=blk&per_page=5&type=base'),
+    ]);
 
-    const top = (stat, label, decimals) => {
-      const sorted = [...players].sort((a,b) => b[stat] - a[stat]).slice(0,5);
-      return '<div class="leader-card">' +
-        '<div class="leader-title"><i class="ti ti-award"></i> ' + label + '</div>' +
-        sorted.map((p, i) =>
-          '<div class="leader-row">' +
-          '<div class="leader-rank">' + (i+1) + '</div>' +
-          '<div class="leader-info"><div class="leader-name">' + p.player.first_name + ' ' + p.player.last_name + '</div>' +
-          '<div class="leader-team">' + (p.team?.abbreviation || '') + '</div></div>' +
-          '<div class="leader-stat">' + Number(p[stat]).toFixed(decimals) + '</div>' +
-          '</div>'
-        ).join('') +
-        '</div>';
-    };
+    const leaderCard = (title, players, stat, decimals) =>
+      '<div class="leader-card">' +
+      '<div class="leader-title"><i class="ti ti-award"></i> ' + title + '</div>' +
+      (players || []).map((p, i) =>
+        '<div class="leader-row">' +
+        '<div class="leader-rank">' + (i+1) + '</div>' +
+        '<div class="leader-info">' +
+        '<div class="leader-name">' + p.player.first_name + ' ' + p.player.last_name + '</div>' +
+        '<div class="leader-team">' + (p.team?.abbreviation || '') + '</div>' +
+        '</div>' +
+        '<div class="leader-stat">' + Number(p[stat]).toFixed(decimals) + '</div>' +
+        '</div>'
+      ).join('') +
+      '</div>';
 
     document.getElementById('leaders-grid').innerHTML =
-      top('pts', 'Puntos por partido', 1) +
-      top('reb', 'Rebotes por partido', 1) +
-      top('ast', 'Asistencias por partido', 1) +
-      top('stl', 'Robos por partido', 1) +
-      top('blk', 'Tapones por partido', 1) +
-      top('fg_pct', 'Porcentaje de campo', 3);
+      leaderCard('Puntos por partido',    ptsData.data, 'pts', 1) +
+      leaderCard('Rebotes por partido',   rebData.data, 'reb', 1) +
+      leaderCard('Asistencias por partido', astData.data, 'ast', 1) +
+      leaderCard('Robos por partido',     stlData.data, 'stl', 1) +
+      leaderCard('Tapones por partido',   blkData.data, 'blk', 1);
 
   } catch(e) {
     document.getElementById('leaders-grid').innerHTML =
