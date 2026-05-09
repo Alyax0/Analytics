@@ -179,16 +179,12 @@
 <footer>Actualización automática cada 5 min &nbsp;·&nbsp; Frelytics © 2026</footer>
 
 <script>
-// ── TEMPORADAS CORRECTAS (mayo 2026) ──────────────────────────
-// EPL/LaLiga/Bundesliga/SerieA/Ligue1 van de ago a mayo → temporada 2025
-// MLS/LigaMX van de feb a dic → temporada 2025
-// UCL va de sep a mayo → temporada 2024 (final fue mayo 2025) → ahora 2025
 const LEAGUES = {
-  epl:        { id: 39,  name: 'Premier League',   flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', season: 2024 },
-  laliga:     { id: 140, name: 'La Liga',          flag: '🇪🇸',        season: 2024 },
-  bundesliga: { id: 78,  name: 'Bundesliga',       flag: '🇩🇪',        season: 2024 },
-  serie_a:    { id: 135, name: 'Serie A',          flag: '🇮🇹',        season: 2024 },
-  ligue1:     { id: 61,  name: 'Ligue 1',          flag: '🇫🇷',        season: 2024 },
+  epl:        { id: 39,  name: 'Premier League',   flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', season: 2025 },
+  laliga:     { id: 140, name: 'La Liga',          flag: '🇪🇸',        season: 2025 },
+  bundesliga: { id: 78,  name: 'Bundesliga',       flag: '🇩🇪',        season: 2025 },
+  serie_a:    { id: 135, name: 'Serie A',          flag: '🇮🇹',        season: 2025 },
+  ligue1:     { id: 61,  name: 'Ligue 1',          flag: '🇫🇷',        season: 2025 },
   ucl:        { id: 2,   name: 'Champions League', flag: '⭐',          season: 2024 },
   mls:        { id: 253, name: 'MLS',              flag: '🇺🇸',        season: 2025 },
   liga_mx:    { id: 262, name: 'Liga MX',          flag: '🇲🇽',        season: 2025 },
@@ -199,7 +195,6 @@ let currentLeague = 'epl';
 let currentView   = 'games';
 let games         = [];
 
-// ── Proxy fetch — usa cache 5 minutos ──────────────────────────
 async function apiFetch(endpoint, params) {
   const cacheKey = endpoint + JSON.stringify(params);
   const cached   = CACHE[cacheKey];
@@ -211,10 +206,8 @@ async function apiFetch(endpoint, params) {
   if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
   const data = await res.json();
 
-  // Si la API devuelve error de cuota u otro error
   if (data.errors && Object.keys(data.errors).length > 0) {
-    const errMsg = JSON.stringify(data.errors);
-    throw new Error('API error: ' + errMsg);
+    throw new Error('API error: ' + JSON.stringify(data.errors));
   }
 
   CACHE[cacheKey] = { data, ts: Date.now() };
@@ -252,11 +245,9 @@ async function selectLeague(key) {
 async function loadData() {
   const league = LEAGUES[currentLeague];
   const now    = new Date();
-
-  // Rango amplio: 60 días atrás y 30 días adelante para no quedarnos sin partidos
-  const from = new Date(now); from.setDate(from.getDate() - 60);
-  const to   = new Date(now); to.setDate(to.getDate() + 30);
-  const fmt  = d => d.toISOString().split('T')[0];
+  const from   = new Date(now); from.setDate(from.getDate() - 60);
+  const to     = new Date(now); to.setDate(to.getDate() + 30);
+  const fmt    = d => d.toISOString().split('T')[0];
 
   try {
     const [fixturesData, standingsData] = await Promise.all([
@@ -285,7 +276,6 @@ async function loadData() {
     document.getElementById('games-label').innerHTML    = '<i class="ti ti-circle-check"></i> Resultados recientes — ' + league.flag + ' ' + league.name;
     document.getElementById('upcoming-label').innerHTML = '<i class="ti ti-calendar"></i> Próximos partidos — ' + league.flag + ' ' + league.name;
 
-    // Tabla de posiciones
     const standingsArr = standingsData.response?.[0]?.league?.standings?.[0] || [];
     document.getElementById('standings-body').innerHTML = standingsArr.length
       ? standingsArr.map(t => {
@@ -370,7 +360,6 @@ document.getElementById('search-input').addEventListener('input', function() {
   }).join('');
 });
 
-// Auto-refresh cada 5 minutos (ahorra requests vs 60s)
 setInterval(() => { Object.keys(CACHE).forEach(k => delete CACHE[k]); loadData(); }, 5 * 60 * 1000);
 
 renderTabs();
