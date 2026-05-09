@@ -183,13 +183,14 @@
 <footer>Actualización automática cada 5 min &nbsp;·&nbsp; Frelytics © 2026</footer>
 
 <script>
-const BASE = 'https://api.balldontlie.io/v1';
-const CACHE = {};
+const BASE   = 'https://api.balldontlie.io/v1';
+const APIKEY = 'b922db60-e2d6-4de6-b156-766b691e668a'; // balldontlie.io → gratis
+const CACHE  = {};
 let currentView = 'games';
 
 async function apiFetch(path) {
   if (CACHE[path] && Date.now() - CACHE[path].ts < 5 * 60 * 1000) return CACHE[path].data;
-  const res  = await fetch(BASE + path);
+  const res  = await fetch(BASE + path, { headers: { 'Authorization': APIKEY } });
   if (!res.ok) throw new Error(res.status);
   const data = await res.json();
   CACHE[path] = { data, ts: Date.now() };
