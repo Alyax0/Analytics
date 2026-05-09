@@ -256,11 +256,22 @@ async function loadData() {
 
     const pastMatches   = pastData.matches   || [];
     const futureMatches = futureData.matches || [];
-    games = [...pastMatches, ...futureMatches];
 
-    const finished = pastMatches.filter(m => m.status === 'FINISHED');
-    const live     = [...pastMatches, ...futureMatches].filter(m => ['IN_PLAY','PAUSED','HALFTIME'].includes(m.status));
-    const upcoming = futureMatches.filter(m => ['TIMED','SCHEDULED'].includes(m.status)).slice(0, 9);
+    // Deduplicar por ID para evitar partidos repetidos
+    const allMap = new Map();
+    [...pastMatches, ...futureMatches].forEach(m => allMap.set(m.id, m));
+    games = Array.from(allMap.values());
+
+    // Deduplicar finished también usando el Map global
+    const finished = Array.from(allMap.values()).filter(m => m.status === 'FINISHED');
+    const live     = games.filter(m => ['IN_PLAY','PAUSED','HALFTIME'].includes(m.status));
+    const liveIds  = new Set(live.map(m => m.id));
+    const finIds   = new Set(finished.map(m => m.id));
+    // Upcoming: solo partidos que NO están en vivo ni terminados
+    const upcoming = Array.from(allMap.values())
+                      .filter(m => ['TIMED','SCHEDULED'].includes(m.status))
+                      .filter(m => !liveIds.has(m.id) && !finIds.has(m.id))
+                      .slice(0, 9);
 
     const finEl = document.getElementById('games-final');
     const upEl  = document.getElementById('games-upcoming');
