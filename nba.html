@@ -192,7 +192,7 @@ async function apiFetch(path) {
   if (CACHE[path] && Date.now() - CACHE[path].ts < 5 * 60 * 1000) return CACHE[path].data;
   // Usamos proxy en Vercel para evitar CORS con el header Authorization
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  const res = await fetch('/api/nba?path=' + encodeURIComponent(cleanPath));
+  const res = await fetch('/api/nba?path=' + cleanPath);
   if (!res.ok) throw new Error(res.status);
   const data = await res.json();
   CACHE[path] = { data, ts: Date.now() };
@@ -222,7 +222,7 @@ async function loadGames() {
   const from  = fmt(past);
 
   try {
-    const data = await apiFetch('/games?dates%5B%5D=' + today + '&per_page=100');
+    const data = await apiFetch('/games?dates[]=' + today + '&per_page=100');
     const recent = await apiFetch('/games?start_date=' + from + '&end_date=' + today + '&per_page=20&sort=date&direction=desc');
 
     const todayGames  = data.data || [];
