@@ -70,8 +70,9 @@
     .game-status.scheduled { background:var(--accent2); color:var(--accent); border:1px solid var(--accent3); }
     .game-status.live { background:rgba(255,77,77,0.12); color:var(--red); border:1px solid rgba(255,77,77,0.25); }
     .game-teams { display:flex; align-items:center; gap:8px; }
-    .team-block { flex:1; }
-    .team-block.right { text-align:right; }
+    .team-block { flex:1; display:flex; flex-direction:column; gap:5px; }
+    .team-block.right { align-items:flex-end; text-align:right; }
+    .team-crest { width:30px; height:30px; object-fit:contain; }
     .team-name { font-size:13px; font-weight:600; color:var(--text); font-family:var(--font-head); }
     .score-block { text-align:center; min-width:72px; }
     .score-main { font-size:24px; font-weight:800; color:var(--text); letter-spacing:3px; font-family:var(--font-head); }
@@ -317,9 +318,15 @@ function gameCard(m, league, idx) {
     '<div class="game-header"><span class="game-league">' + league.name + '</span>' +
     '<span class="game-status ' + st + '">' + label + '</span></div>' +
     '<div class="game-teams">' +
-      '<div class="team-block"><div class="team-name">' + (m.homeTeam.shortName || m.homeTeam.name) + '</div></div>' +
+      '<div class="team-block">' +
+        (m.homeTeam.crest ? '<img class="team-crest" src="' + m.homeTeam.crest + '" onerror="this.style.display=\'none\'" />' : '') +
+        '<div class="team-name">' + (m.homeTeam.shortName || m.homeTeam.name) + '</div>' +
+      '</div>' +
       '<div class="score-block">' + scoreHtml + '</div>' +
-      '<div class="team-block right"><div class="team-name">' + (m.awayTeam.shortName || m.awayTeam.name) + '</div></div>' +
+      '<div class="team-block right">' +
+        (m.awayTeam.crest ? '<img class="team-crest" src="' + m.awayTeam.crest + '" onerror="this.style.display=\'none\'" />' : '') +
+        '<div class="team-name">' + (m.awayTeam.shortName || m.awayTeam.name) + '</div>' +
+      '</div>' +
     '</div>' +
     '<div class="game-footer"><span class="game-time">' + formatDate(m.utcDate) + '</span></div>' +
     '</div>';
