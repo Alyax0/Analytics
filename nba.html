@@ -40,33 +40,35 @@
       background:linear-gradient(135deg,var(--text) 0%,rgba(238,240,245,0.6) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
     .hero p { font-size:14px; color:var(--text2); line-height:1.6; }
     .section-label { font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.15em; margin-bottom:14px; display:flex; align-items:center; gap:7px; font-family:var(--font-head); }
+
+    /* ── GAME CARDS ── */
     .games-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(285px,1fr)); gap:10px; margin-bottom:32px; }
     .game-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; transition:all .15s; cursor:pointer; animation:fadeUp .3s ease both; }
     .game-card:hover { border-color:var(--border2); transform:translateY(-1px); box-shadow:0 8px 32px rgba(0,0,0,0.3); }
     .game-card.live { border-color:rgba(255,77,77,0.3); }
     @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes shimmer { 0%,100%{opacity:.3} 50%{opacity:.7} }
+
     .game-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
     .game-league { font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.1em; font-family:var(--font-head); }
     .game-status { font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; font-family:var(--font-head); }
-    .game-status.final { background:rgba(255,255,255,0.06); color:var(--text3); }
+    .game-status.final     { background:rgba(255,255,255,0.06); color:var(--text3); }
     .game-status.scheduled { background:var(--accent2); color:var(--accent); border:1px solid var(--accent3); }
-    .game-status.live { background:rgba(255,77,77,0.12); color:var(--red); border:1px solid rgba(255,77,77,0.25); }
-    .game-teams { display:flex; align-items:center; gap:8px; }
-    .team-block { flex:1; min-width:0; max-width:100px; display:flex; flex-direction:column; align-items:flex-start; gap:6px; overflow:hidden; }
-    .team-block.right { align-items:flex-end; text-align:right; }
-    .team-logo { width:36px; height:36px; object-fit:contain; }
-    .team-name { font-size:11px; font-weight:600; color:var(--text); font-family:var(--font-head); line-height:1.3; word-break:break-word; }
-    .team-name { font-size:12px; font-weight:700; color:var(--text); font-family:var(--font-head); }
-    .team-record { font-size:10px; color:var(--text3); }
-    .score-block { text-align:center; min-width:80px; flex-shrink:0; }
-    .score-main { font-size:20px; font-weight:800; color:var(--text); letter-spacing:2px; font-family:var(--font-head); white-space:nowrap; }
-    .score-vs { font-size:12px; color:var(--text3); font-weight:600; font-family:var(--font-head); }
-    .score-period { font-size:10px; color:var(--red); font-weight:600; font-family:var(--font-head); margin-top:2px; }
-    .game-footer { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
-    .game-time { font-size:11px; color:var(--text3); font-weight:500; }
+    .game-status.live      { background:rgba(255,77,77,0.12); color:var(--red); border:1px solid rgba(255,77,77,0.25); }
 
-    /* STANDINGS */
+    /* Team layout: logo + name on top, score in center */
+    .game-teams { display:flex; align-items:center; gap:6px; }
+    .team-block { flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:5px; }
+    .team-block.right { align-items:flex-end; }
+    .team-logo { width:32px; height:32px; object-fit:contain; flex-shrink:0; }
+    .team-name { font-size:11px; font-weight:600; color:var(--text); font-family:var(--font-head); line-height:1.25;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:105px; }
+    .score-block { text-align:center; min-width:68px; flex-shrink:0; }
+    .score-main { font-size:18px; font-weight:800; color:var(--text); letter-spacing:1px; font-family:var(--font-head); white-space:nowrap; }
+    .score-vs   { font-size:11px; color:var(--text3); font-weight:600; font-family:var(--font-head); }
+    .game-footer { margin-top:12px; padding-top:10px; border-top:1px solid var(--border); font-size:11px; color:var(--text3); }
+
+    /* ── STANDINGS ── */
     .conf-title { font-size:12px; font-weight:700; color:var(--accent); font-family:var(--font-head); padding:10px 12px; background:var(--bg3); border-bottom:1px solid var(--border); }
     .standings-wrap { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:20px; }
     .standings-table { width:100%; border-collapse:collapse; }
@@ -85,14 +87,14 @@
     .pts { font-weight:800; color:var(--accent); font-family:var(--font-head); font-size:14px; }
     .playoff-line td { border-top:2px solid rgba(200,168,75,0.3) !important; }
 
-    /* VIEW TOGGLE */
-    .controls-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+    /* ── TOGGLE ── */
+    .controls-row { display:flex; align-items:center; margin-bottom:20px; }
     .view-toggle { display:flex; gap:4px; background:var(--bg2); border:1px solid var(--border); border-radius:10px; padding:3px; }
     .toggle-btn { display:flex; align-items:center; gap:5px; padding:6px 13px; border-radius:7px; border:none; background:transparent; color:var(--text2); font-size:12px; font-weight:600; cursor:pointer; font-family:var(--font-head); transition:all .15s; }
     .toggle-btn.active { background:var(--bg4); color:var(--text); box-shadow:0 1px 4px rgba(0,0,0,0.3); }
     .toggle-btn:hover:not(.active) { color:var(--text); }
 
-    /* LEADERS */
+    /* ── LEADERS ── */
     .leaders-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:10px; margin-bottom:32px; }
     .leader-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; }
     .leader-title { font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.12em; font-family:var(--font-head); margin-bottom:12px; }
@@ -120,7 +122,7 @@
     <span class="beta">BETA</span>
   </a>
   <div class="nav-links">
-    <a href="/" >FUT</a>
+    <a href="/">FUT</a>
     <a href="/nba.html" class="active">NBA</a>
     <a href="/mlb.html">MLB</a>
   </div>
@@ -143,7 +145,6 @@
     </div>
   </div>
 
-  <!-- GAMES -->
   <div id="view-games">
     <div class="section-label"><i class="ti ti-circle-filled" style="color:var(--red);font-size:8px"></i> En vivo / Hoy</div>
     <div class="games-grid" id="games-today"></div>
@@ -151,9 +152,8 @@
     <div class="games-grid" id="games-recent"></div>
   </div>
 
-  <!-- STANDINGS -->
   <div id="view-standings" style="display:none">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="standings-container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
       <div>
         <div class="standings-wrap">
           <div class="conf-title">🏆 Conferencia Este</div>
@@ -175,7 +175,6 @@
     </div>
   </div>
 
-  <!-- LEADERS -->
   <div id="view-leaders" style="display:none">
     <div class="section-label"><i class="ti ti-chart-bar"></i> Líderes de temporada</div>
     <div class="leaders-grid" id="leaders-grid"></div>
@@ -188,9 +187,27 @@
 const CACHE = {};
 let currentView = 'games';
 
+// Mapa de ID de equipo balldontlie → ID de logo NBA CDN
+// Los IDs de balldontlie no coinciden con los de NBA CDN, usamos abreviación
+const LOGO_MAP = {
+  'ATL':'1610612737','BOS':'1610612738','BKN':'1610612751','CHA':'1610612766',
+  'CHI':'1610612741','CLE':'1610612739','DAL':'1610612742','DEN':'1610612743',
+  'DET':'1610612765','GSW':'1610612744','HOU':'1610612745','IND':'1610612754',
+  'LAC':'1610612746','LAL':'1610612747','MEM':'1610612763','MIA':'1610612748',
+  'MIL':'1610612749','MIN':'1610612750','NOP':'1610612740','NYK':'1610612752',
+  'OKC':'1610612760','ORL':'1610612753','PHI':'1610612755','PHX':'1610612756',
+  'POR':'1610612757','SAC':'1610612758','SAS':'1610612759','TOR':'1610612761',
+  'UTA':'1610612762','WAS':'1610612764'
+};
+
+function teamLogo(abbr) {
+  const nbaId = LOGO_MAP[abbr];
+  if (!nbaId) return '';
+  return 'https://cdn.nba.com/logos/nba/' + nbaId + '/global/L/logo.svg';
+}
+
 async function apiFetch(path) {
   if (CACHE[path] && Date.now() - CACHE[path].ts < 5 * 60 * 1000) return CACHE[path].data;
-  // Usamos proxy en Vercel para evitar CORS con el header Authorization
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   const res = await fetch('/api/nba?path=' + encodeURIComponent(cleanPath));
   if (!res.ok) throw new Error(res.status);
@@ -216,17 +233,19 @@ async function loadGames() {
   document.getElementById('games-today').innerHTML  = skel(3);
   document.getElementById('games-recent').innerHTML = skel(3);
 
-  const now   = new Date();
-  const past  = new Date(now); past.setDate(past.getDate() - 7);
+  const now  = new Date();
+  const past = new Date(now); past.setDate(past.getDate() - 7);
   const today = fmt(now);
   const from  = fmt(past);
 
   try {
-    const data = await apiFetch('/games?dates[]=' + today + '&per_page=100');
-    const recent = await apiFetch('/games?start_date=' + from + '&end_date=' + today + '&per_page=20&sort=date&direction=desc');
+    const [todayData, recentData] = await Promise.all([
+      apiFetch('/games?dates[]=' + today + '&per_page=100'),
+      apiFetch('/games?start_date=' + from + '&end_date=' + today + '&per_page=20')
+    ]);
 
-    const todayGames  = data.data || [];
-    const recentGames = (recent.data || []).filter(g => g.status === 'Final').slice(-9);
+    const todayGames  = todayData.data || [];
+    const recentGames = (recentData.data || []).filter(g => g.status === 'Final').slice(-9);
 
     const todayEl  = document.getElementById('games-today');
     const recentEl = document.getElementById('games-recent');
@@ -250,38 +269,45 @@ function gameCard(g, idx) {
   const isLive    = !isFinal && g.period > 0 && g.time && g.time !== 'Final';
   const isPending = !isFinal && !isLive;
   const st        = isFinal ? 'final' : isLive ? 'live' : 'scheduled';
-  // For upcoming games show the local time, for live show quarter+time
-  let gameTime = '';
-  if (isPending && g.status) {
-    try {
-      gameTime = new Date(g.status).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Mexico_City' });
-    } catch(e) { gameTime = 'HOY'; }
+
+  let label = 'HOY';
+  if (isFinal) label = 'FIN';
+  else if (isLive) label = '● ' + g.period + 'Q ' + g.time;
+  else if (isPending && g.status) {
+    try { label = new Date(g.status).toLocaleTimeString('es-MX', { hour:'2-digit', minute:'2-digit', timeZone:'America/Mexico_City' }); }
+    catch(e) { label = 'HOY'; }
   }
-  const label = isFinal ? 'FIN' : isLive ? '● ' + g.period + 'Q ' + g.time : gameTime || 'HOY';
 
   const scoreHtml = (isFinal || isLive)
     ? '<div class="score-main">' + g.home_team_score + ' – ' + g.visitor_team_score + '</div>'
     : '<div class="score-vs">VS</div>';
 
-  const homeName = g.home_team.full_name;
-  const awayName = g.visitor_team.full_name;
-  const homeLogo = 'https://cdn.nba.com/logos/nba/' + g.home_team.id + '/global/L/logo.svg';
-  const awayLogo = 'https://cdn.nba.com/logos/nba/' + g.visitor_team.id + '/global/L/logo.svg';
+  const homeAbbr = g.home_team.abbreviation;
+  const awayAbbr = g.visitor_team.abbreviation;
+  const homeLogo = teamLogo(homeAbbr);
+  const awayLogo = teamLogo(awayAbbr);
+
+  const logoTag = (src) => src
+    ? '<img src="' + src + '" class="team-logo" onerror="this.style.display=\'none\'" />'
+    : '';
 
   return '<div class="game-card ' + (isLive ? 'live' : '') + '" style="animation-delay:' + (idx*40) + 'ms">' +
-    '<div class="game-header"><span class="game-league">NBA' + (g.postseason ? ' · Playoffs' : '') + '</span><span class="game-status ' + st + '">' + label + '</span></div>' +
+    '<div class="game-header">' +
+      '<span class="game-league">NBA' + (g.postseason ? ' · Playoffs' : '') + '</span>' +
+      '<span class="game-status ' + st + '">' + label + '</span>' +
+    '</div>' +
     '<div class="game-teams">' +
       '<div class="team-block">' +
-        '<img src="' + homeLogo + '" class="team-logo" onerror="this.style.display=\'none\'" />' +
-        '<div class="team-name">' + homeName + '</div>' +
+        logoTag(homeLogo) +
+        '<div class="team-name">' + g.home_team.full_name + '</div>' +
       '</div>' +
       '<div class="score-block">' + scoreHtml + '</div>' +
       '<div class="team-block right">' +
-        '<img src="' + awayLogo + '" class="team-logo" onerror="this.style.display=\'none\'" />' +
-        '<div class="team-name">' + awayName + '</div>' +
+        logoTag(awayLogo) +
+        '<div class="team-name">' + g.visitor_team.full_name + '</div>' +
       '</div>' +
     '</div>' +
-    '<div class="game-footer"><span class="game-time">' + formatDate(g.date) + '</span></div>' +
+    '<div class="game-footer">' + formatDate(g.date) + '</div>' +
     '</div>';
 }
 
@@ -289,7 +315,7 @@ async function loadStandings() {
   document.getElementById('east-body').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Cargando...</td></tr>';
   document.getElementById('west-body').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Cargando...</td></tr>';
   try {
-    const data = await apiFetch('/standings?season=2024&per_page=100');
+    const data = await apiFetch('/standings?season=2025&per_page=100');
     const all  = data.data || [];
     const east = all.filter(t => t.conference === 'East').sort((a,b) => a.conference_rank - b.conference_rank);
     const west = all.filter(t => t.conference === 'West').sort((a,b) => a.conference_rank - b.conference_rank);
@@ -299,13 +325,13 @@ async function loadStandings() {
         const p  = i + 1;
         const bc = p===1?'pos-1':p===2?'pos-2':p===3?'pos-3':'pos-n';
         const gb = t.games_back === 0 ? '—' : t.games_back;
-        const playoff = p === 7 ? 'class="playoff-line"' : '';
-        return '<tr ' + playoff + '>' +
+        const pct = (t.wins / ((t.wins + t.losses) || 1)).toFixed(3).replace('0.', '.');
+        return '<tr' + (p === 7 ? ' class="playoff-line"' : '') + '>' +
           '<td><span class="pos-badge ' + bc + '">' + p + '</span></td>' +
           '<td class="team-td">' + t.team.full_name + '</td>' +
           '<td>' + t.wins + '</td>' +
           '<td>' + t.losses + '</td>' +
-          '<td>' + (t.wins/(t.wins+t.losses||1)).toFixed(3).replace('0.','.') + + '</td>' +
+          '<td>' + pct + '</td>' +
           '<td>' + gb + '</td>' +
           '</tr>';
       }).join('');
@@ -321,7 +347,6 @@ async function loadStandings() {
 async function loadLeaders() {
   document.getElementById('leaders-grid').innerHTML = skel(3);
   try {
-    // Fetch season averages for top players
     const [ptsData, rebData, astData, stlData, blkData] = await Promise.all([
       apiFetch('/season_averages/general?season=2024&sort_by=pts&per_page=5&type=base'),
       apiFetch('/season_averages/general?season=2024&sort_by=reb&per_page=5&type=base'),
@@ -346,11 +371,11 @@ async function loadLeaders() {
       '</div>';
 
     document.getElementById('leaders-grid').innerHTML =
-      leaderCard('Puntos por partido',    ptsData.data, 'pts', 1) +
-      leaderCard('Rebotes por partido',   rebData.data, 'reb', 1) +
+      leaderCard('Puntos por partido',      ptsData.data, 'pts', 1) +
+      leaderCard('Rebotes por partido',     rebData.data, 'reb', 1) +
       leaderCard('Asistencias por partido', astData.data, 'ast', 1) +
-      leaderCard('Robos por partido',     stlData.data, 'stl', 1) +
-      leaderCard('Tapones por partido',   blkData.data, 'blk', 1);
+      leaderCard('Robos por partido',       stlData.data, 'stl', 1) +
+      leaderCard('Tapones por partido',     blkData.data, 'blk', 1);
 
   } catch(e) {
     document.getElementById('leaders-grid').innerHTML =
@@ -360,7 +385,7 @@ async function loadLeaders() {
 
 function switchView(view) {
   currentView = view;
-  document.getElementById('view-games').style.display    = view === 'games'     ? 'block' : 'none';
+  document.getElementById('view-games').style.display     = view === 'games'     ? 'block' : 'none';
   document.getElementById('view-standings').style.display = view === 'standings' ? 'block' : 'none';
   document.getElementById('view-leaders').style.display   = view === 'leaders'   ? 'block' : 'none';
   ['btn-games','btn-standings','btn-leaders'].forEach(id =>
