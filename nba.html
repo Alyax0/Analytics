@@ -42,7 +42,7 @@
     .section-label { font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:0.15em; margin-bottom:14px; display:flex; align-items:center; gap:7px; font-family:var(--font-head); }
 
     /* ── GAME CARDS ── */
-    .games-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(285px,1fr)); gap:10px; margin-bottom:32px; }
+    .games-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:10px; margin-bottom:32px; }
     .game-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; transition:all .15s; cursor:pointer; animation:fadeUp .3s ease both; }
     .game-card:hover { border-color:var(--border2); transform:translateY(-1px); box-shadow:0 8px 32px rgba(0,0,0,0.3); }
     .game-card.live { border-color:rgba(255,77,77,0.3); }
@@ -58,13 +58,13 @@
 
     /* Team layout: logo + name on top, score in center */
     .game-teams { display:flex; align-items:center; gap:6px; }
-    .team-block { flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:5px; }
-    .team-block.right { align-items:flex-end; }
-    .team-logo { width:32px; height:32px; object-fit:contain; flex-shrink:0; }
-    .team-name { font-size:11px; font-weight:600; color:var(--text); font-family:var(--font-head); line-height:1.25;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:105px; }
-    .score-block { text-align:center; min-width:68px; flex-shrink:0; }
-    .score-main { font-size:18px; font-weight:800; color:var(--text); letter-spacing:1px; font-family:var(--font-head); white-space:nowrap; }
+    .team-block { flex:1; min-width:0; display:flex; align-items:center; gap:8px; }
+    .team-block.right { flex-direction:row-reverse; }
+    .team-logo { width:28px; height:28px; object-fit:contain; flex-shrink:0; }
+    .team-name { font-size:12px; font-weight:600; color:var(--text); font-family:var(--font-head);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:130px; }
+    .score-block { text-align:center; min-width:90px; flex-shrink:0; }
+    .score-main { font-size:22px; font-weight:800; color:var(--text); letter-spacing:2px; font-family:var(--font-head); white-space:nowrap; }
     .score-vs   { font-size:11px; color:var(--text3); font-weight:600; font-family:var(--font-head); }
     .game-footer { margin-top:12px; padding-top:10px; border-top:1px solid var(--border); font-size:11px; color:var(--text3); }
 
