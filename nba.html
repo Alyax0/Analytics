@@ -53,14 +53,14 @@
     .game-status.scheduled { background:var(--accent2); color:var(--accent); border:1px solid var(--accent3); }
     .game-status.live { background:rgba(255,77,77,0.12); color:var(--red); border:1px solid rgba(255,77,77,0.25); }
     .game-teams { display:flex; align-items:center; gap:8px; }
-    .team-block { flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
+    .team-block { flex:1; min-width:0; max-width:100px; display:flex; flex-direction:column; align-items:flex-start; gap:6px; overflow:hidden; }
     .team-block.right { align-items:flex-end; text-align:right; }
     .team-logo { width:36px; height:36px; object-fit:contain; }
-    .team-name { font-size:12px; font-weight:600; color:var(--text); font-family:var(--font-head); line-height:1.3; }
+    .team-name { font-size:11px; font-weight:600; color:var(--text); font-family:var(--font-head); line-height:1.3; word-break:break-word; }
     .team-name { font-size:12px; font-weight:700; color:var(--text); font-family:var(--font-head); }
     .team-record { font-size:10px; color:var(--text3); }
-    .score-block { text-align:center; min-width:72px; flex-shrink:0; }
-    .score-main { font-size:22px; font-weight:800; color:var(--text); letter-spacing:3px; font-family:var(--font-head); }
+    .score-block { text-align:center; min-width:80px; flex-shrink:0; }
+    .score-main { font-size:20px; font-weight:800; color:var(--text); letter-spacing:2px; font-family:var(--font-head); white-space:nowrap; }
     .score-vs { font-size:12px; color:var(--text3); font-weight:600; font-family:var(--font-head); }
     .score-period { font-size:10px; color:var(--red); font-weight:600; font-family:var(--font-head); margin-top:2px; }
     .game-footer { margin-top:12px; padding-top:12px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
@@ -246,10 +246,18 @@ async function loadGames() {
 }
 
 function gameCard(g, idx) {
-  const isLive  = g.status !== 'Final' && g.status !== '' && !g.status.includes('ET');
-  const isFinal = g.status === 'Final';
-  const st      = isFinal ? 'final' : isLive ? 'live' : 'scheduled';
-  const label   = isFinal ? 'FIN' : isLive ? '● ' + g.period + 'Q ' + g.time : 'HOY';
+  const isFinal   = g.status === 'Final';
+  const isLive    = !isFinal && g.period > 0 && g.time && g.time !== 'Final';
+  const isPending = !isFinal && !isLive;
+  const st        = isFinal ? 'final' : isLive ? 'live' : 'scheduled';
+  // For upcoming games show the local time, for live show quarter+time
+  let gameTime = '';
+  if (isPending && g.status) {
+    try {
+      gameTime = new Date(g.status).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Mexico_City' });
+    } catch(e) { gameTime = 'HOY'; }
+  }
+  const label = isFinal ? 'FIN' : isLive ? '● ' + g.period + 'Q ' + g.time : gameTime || 'HOY';
 
   const scoreHtml = (isFinal || isLive)
     ? '<div class="score-main">' + g.home_team_score + ' – ' + g.visitor_team_score + '</div>'
@@ -261,7 +269,7 @@ function gameCard(g, idx) {
   const awayLogo = 'https://cdn.nba.com/logos/nba/' + g.visitor_team.id + '/global/L/logo.svg';
 
   return '<div class="game-card ' + (isLive ? 'live' : '') + '" style="animation-delay:' + (idx*40) + 'ms">' +
-    '<div class="game-header"><span class="game-league">NBA</span><span class="game-status ' + st + '">' + label + '</span></div>' +
+    '<div class="game-header"><span class="game-league">NBA' + (g.postseason ? ' · Playoffs' : '') + '</span><span class="game-status ' + st + '">' + label + '</span></div>' +
     '<div class="game-teams">' +
       '<div class="team-block">' +
         '<img src="' + homeLogo + '" class="team-logo" onerror="this.style.display=\'none\'" />' +
