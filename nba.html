@@ -206,8 +206,8 @@ function teamLogo(abbr) {
   return 'https://cdn.nba.com/logos/nba/' + nbaId + '/global/L/logo.svg';
 }
 
-async function apiFetch(path) {
-  if (CACHE[path] && Date.now() - CACHE[path].ts < 5 * 60 * 1000) return CACHE[path].data;
+async function apiFetch(path, noCache) {
+  if (!noCache && CACHE[path] && Date.now() - CACHE[path].ts < 5 * 60 * 1000) return CACHE[path].data;
   const cleanPath = path.startsWith('/') ? path.slice(1) : path;
   const res = await fetch('/api/nba?path=' + encodeURIComponent(cleanPath));
   if (!res.ok) throw new Error(res.status);
@@ -240,7 +240,7 @@ async function loadGames() {
 
   try {
     const [todayData, recentData] = await Promise.all([
-      apiFetch('/games?dates[]=' + today + '&per_page=100'),
+      apiFetch('/games?dates[]=' + today + '&per_page=100', true), // nunca cachear hoy
       apiFetch('/games?start_date=' + from + '&end_date=' + today + '&per_page=20')
     ]);
 
@@ -395,7 +395,7 @@ function switchView(view) {
   if (view === 'leaders')   loadLeaders();
 }
 
-setInterval(() => { Object.keys(CACHE).forEach(k => delete CACHE[k]); loadGames(); }, 5 * 60 * 1000);
+setInterval(() => loadGames(), 2 * 60 * 1000); // cada 2 min para partidos de hoy
 loadGames();
 </script>
 </body>
