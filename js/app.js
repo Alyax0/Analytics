@@ -1,7 +1,10 @@
 import { SPORTS, DEFAULT_SPORT } from './sports.js';
 import { espnGet } from './api.js';
-import { normalizeScoreboard, scoreboardRequests, splitMatches, normalizeStandings, normalizeLeaders } from './model.js';
-import { esc, ago, matchCard, standingsTable, leaderCard, skeletons, emptyState, errorState } from './ui.js';
+import {
+  normalizeScoreboard, normalizeLatest, scoreboardRequests, splitMatches, normalizeStandings, normalizeLeaders,
+  findChampion, monthOf,
+} from './model.js';
+import { esc, ago, dayLabel, matchCard, standingsTable, leaderCard, seasonEndCard, skeletons, emptyState, errorState } from './ui.js';
 import { t, setLang, preferredLang } from './i18n.js';
 
 // Caché del navegador por tipo de dato (el CDN de Vercel cachea aparte)
@@ -62,6 +65,35 @@ function isOld(dates) {
   return Date.now() - end.getTime() > 2 * 86400 * 1000;
 }
 
+// Si ESPN ya tiene un partido futuro (fuera de la ventana), devuelve { next }.
+// Si no, la temporada terminó: { ended, season, champion, last } con los
+// últimos partidos jugados, aunque sean de hace semanas. Si falla, null:
+// la sección se muestra igual, sin el aviso.
+async function loadOffseason(sport, league, force) {
+  try {
+    const latest = await espnGet(league.id, 'scoreboard', {}, { ttl: TTL.recent, force, normalize: normalizeLatest });
+    const now = Date.now();
+    const future = latest.data.matches.filter((m) => m.status === 'scheduled' && m.date > now).sort((a, b) => a.date - b.date);
+    if (future.length) return { next: future[0].date };
+
+    let played = latest.data.matches.filter((m) => m.status === 'final');
+    const lastDate = Math.max(0, ...played.map((m) => m.date));
+    // El scoreboard sin fecha trae un solo día: si quedó fuera de la ventana, se pide el mes entero
+    if (lastDate && lastDate < now - sport.pastDays * 86400000) {
+      const month = monthOf(lastDate);
+      const r = await espnGet(league.id, 'scoreboard', { dates: month, limit: 500 }, {
+        ttl: isOld(month) ? TTL.old : TTL.recent, force, normalize: normalizeScoreboard,
+      });
+      played = [...played, ...r.data.filter((m) => m.status === 'final')];
+    }
+    const last = [...new Map(played.map((m) => [m.id, m])).values()].sort((a, b) => b.date - a.date).slice(0, 6);
+    return { ended: true, season: latest.data.season, champion: findChampion(last, sport), last };
+  } catch (err) {
+    console.warn('No se pudo ver si terminó la temporada:', err.message);
+    return null;
+  }
+}
+
 const FETCHERS = {
   async partidos(sport, league, force) {
     const settled = await Promise.allSettled(
@@ -73,7 +105,11 @@ const FETCHERS = {
     const failed = settled.find((s) => s.status === 'rejected');
     if (!results.length) throw failed.reason;
     if (failed) results.push({ at: Date.now(), stale: true, error: failed.reason.message });
-    return { data: results.flatMap((r) => r.data || []), results };
+    const matches = results.flatMap((r) => r.data || []);
+    const { live, upcoming } = splitMatches(matches, sport);
+    // Sin partidos en vivo ni próximos: puede ser el receso o un parón largo
+    const offseason = live.length || upcoming.length ? null : await loadOffseason(sport, league, force);
+    return { data: { matches, offseason }, results };
   },
   async tabla(sport, league, force) {
     const r = await espnGet(league.id, 'standings', {}, {
@@ -140,22 +176,35 @@ function bodyFor(e, skeleton, renderReady) {
   return staleNotice(e) + renderReady(e.data);
 }
 
-function matchLists(sport, matches) {
+function matchLists(sport, league, { matches, offseason }) {
   const q = query.trim().toLowerCase();
-  const filtered = q
-    ? matches.filter((m) => [m.home.name, m.home.short, m.away.name, m.away.short].some((n) => n.toLowerCase().includes(q)))
-    : matches;
-  const { live, upcoming, past } = splitMatches(filtered, sport);
-  if (q && !live.length && !upcoming.length && !past.length) return emptyState(t('matches.noResultsFor', { q }));
+  const byTeam = (list) => (q
+    ? list.filter((m) => [m.home.name, m.home.short, m.away.name, m.away.short].some((n) => n.toLowerCase().includes(q)))
+    : list);
+  const { live, upcoming, past } = splitMatches(byTeam(matches), sport);
+  const ended = offseason?.ended ? offseason : null;
+  // En el receso, si no hay resultados en la ventana, se muestran los últimos partidos jugados
+  const lastPlayed = ended && !past.length ? byTeam(ended.last) : [];
+  if (q && !live.length && !upcoming.length && !past.length && !lastPlayed.length) {
+    return emptyState(t('matches.noResultsFor', { q }));
+  }
 
   const block = (label, list, empty, dot = false) => `
     <h2 class="section-label">${dot ? '<span class="dot"></span>' : ''}${esc(label)} <span class="count">${list.length || ''}</span></h2>
     ${list.length ? `<div class="grid">${list.map((m, i) => matchCard(m, sport, i)).join('')}</div>` : empty}`;
 
+  const noUpcoming = offseason?.next
+    ? emptyState(t('matches.noUpcoming'), t('offseason.next', { date: dayLabel(offseason.next) }))
+    : emptyState(t('matches.noUpcoming'), t('matches.window', { n: sport.nextDays }));
+
   return [
+    ended && !q ? seasonEndCard(ended, sport, league) : '',
     live.length ? block(t('matches.live'), live, '', true) : '',
-    block(t('matches.upcoming'), upcoming, emptyState(t('matches.noUpcoming'), t('matches.window', { n: sport.nextDays }))),
-    block(t('matches.results'), past, emptyState(t('matches.noResults'), t('matches.windowPast', { n: sport.pastDays }))),
+    // Con la temporada terminada no tiene sentido una sección de próximos vacía
+    ended ? '' : block(t('matches.upcoming'), upcoming, noUpcoming),
+    lastPlayed.length
+      ? block(t('offseason.lastPlayed'), lastPlayed, '')
+      : block(t('matches.results'), past, emptyState(t('matches.noResults'), t('matches.windowPast', { n: sport.pastDays }))),
   ].join('');
 }
 
@@ -167,7 +216,7 @@ function viewPartidos(sport, league) {
       <input id="filter" class="filter-input" type="search" autocomplete="off" placeholder="${esc(t('matches.filter'))}" value="${esc(query)}">
       ${updatedLine(e)}
     </div>
-    <div id="match-lists">${bodyFor(e, skeletons(6), (data) => matchLists(sport, data))}</div>`;
+    <div id="match-lists">${bodyFor(e, skeletons(6), (data) => matchLists(sport, league, data))}</div>`;
 }
 
 function viewTabla(sport, league) {
@@ -203,7 +252,7 @@ function leagueLogo(league, cls) {
 
 function liveCount() {
   const e = entry(route.league.id, 'partidos');
-  return e.status === 'ready' ? e.data.filter((m) => m.status === 'live').length : 0;
+  return e.status === 'ready' ? e.data.matches.filter((m) => m.status === 'live').length : 0;
 }
 
 function renderChrome() {
@@ -287,7 +336,7 @@ app.addEventListener('input', (ev) => {
   if (ev.target.id !== 'filter') return;
   query = ev.target.value;
   const e = entry(route.league.id, 'partidos');
-  if (e.status === 'ready') document.getElementById('match-lists').innerHTML = matchLists(route.sport, e.data);
+  if (e.status === 'ready') document.getElementById('match-lists').innerHTML = matchLists(route.sport, route.league, e.data);
 });
 
 app.addEventListener('click', (ev) => {

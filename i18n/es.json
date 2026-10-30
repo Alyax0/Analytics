@@ -64,6 +64,18 @@
     "windowPast": { "one": "Se muestra el último día.", "other": "Se muestran los últimos {n} días." },
     "noResultsFor": "Ningún partido coincide con «{q}»."
   },
+  "offseason": {
+    "ended": "Temporada {season} terminada",
+    "endedNoSeason": "Temporada terminada",
+    "champion": "🏆 Campeón · {title}",
+    "finals": {
+      "nba": "Finales de la NBA",
+      "mlb": "Serie Mundial"
+    },
+    "noCalendar": "El calendario de la próxima temporada todavía no está publicado.",
+    "lastPlayed": "Últimos partidos",
+    "next": "Próximo partido: {date}."
+  },
   "table": {
     "team": "Equipo",
     "season": "Temporada {season}",

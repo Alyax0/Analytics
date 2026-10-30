@@ -167,6 +167,25 @@ export function leaderCard(cat, sport) {
   </div>`;
 }
 
+// Aviso de temporada terminada, con el campeón si se pudo detectar
+export function seasonEndCard(off, sport, league) {
+  const heading = off.season ? t('offseason.ended', { season: off.season }) : t('offseason.endedNoSeason');
+  const finalsKey = `offseason.finals.${sport.id}`;
+  const title = t(finalsKey) === finalsKey ? league.name : t(finalsKey);
+  const champ = off.champion?.team;
+  return `<section class="season-end" aria-label="${esc(heading)}">
+    <p class="season-end-kicker">${esc(heading)}</p>
+    ${champ ? `<div class="season-end-champ">
+      ${logo(champ.logo, 'season-end-logo')}
+      <div>
+        <div class="season-end-name">${esc(champ.name)}</div>
+        <div class="season-end-title">${esc(t('offseason.champion', { title }))}</div>
+      </div>
+    </div>` : ''}
+    <p class="season-end-hint">${esc(t('offseason.noCalendar'))}</p>
+  </section>`;
+}
+
 export function skeletons(n, cls = '') {
   return Array.from({ length: n }, () => `<div class="skeleton ${cls}"></div>`).join('');
 }

@@ -66,6 +66,8 @@ export const SPORTS = {
         { key: 'Last Ten Games', label: 'last10', wide: true },
       ],
     },
+    // Nota de ESPN en los partidos de la final ("NBA Finals - Game 5")
+    finals: /^NBA Finals/i,
     // ESPN nombra la temporada 2026-27 con el año en que termina
     season: (d) => (d.getMonth() >= 8 ? d.getFullYear() + 1 : d.getFullYear()),
     // nombre de la categoría en ESPN → decimales
@@ -92,6 +94,7 @@ export const SPORTS = {
         { key: 'Last Ten Games', label: 'last10', wide: true },
       ],
     },
+    finals: /^World Series/i,
     // Enero y febrero todavía muestran la temporada anterior
     season: (d) => (d.getMonth() >= 2 ? d.getFullYear() : d.getFullYear() - 1),
     // 'avg' se muestra como .300
