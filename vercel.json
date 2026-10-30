@@ -1,0 +1,6 @@
+{
+  "redirects": [
+    { "source": "/nba.html", "destination": "/#/nba", "permanent": true },
+    { "source": "/mlb.html", "destination": "/#/mlb", "permanent": true }
+  ]
+}

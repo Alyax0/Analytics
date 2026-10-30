@@ -1,0 +1,109 @@
+{
+  "meta": {
+    "title": "{name} · Frelytics"
+  },
+  "nav": {
+    "sport": "Sport",
+    "sections": "Sections",
+    "league": "League",
+    "live": "Live",
+    "partidos": "Games",
+    "tabla": "Standings",
+    "lideres": "Leaders"
+  },
+  "sections": {
+    "partidos": { "subtitle": "Live, upcoming and recent games." },
+    "tabla": { "subtitle": "Season standings." },
+    "lideres": { "subtitle": "The season's best in each stat." }
+  },
+  "common": {
+    "updated": "Updated {ago}",
+    "justNow": "just now",
+    "minutesAgo": { "one": "{n} minute ago", "other": "{n} minutes ago" },
+    "hoursAgo": { "one": "{n} hour ago", "other": "{n} hours ago" },
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "yesterday": "Yesterday",
+    "dateToConfirm": "Date TBD",
+    "toConfirm": "TBD",
+    "retry": "Retry"
+  },
+  "match": {
+    "aria": "{a} vs {b}",
+    "live": "Live",
+    "halftime": "Halftime",
+    "quarter": "Q{n} · {clock}",
+    "endQuarter": "End Q{n}",
+    "overtime": "OT{n} · {clock}",
+    "inning": {
+      "top": "Top {n}",
+      "bottom": "Bot {n}",
+      "middle": "Mid {n}",
+      "end": "End {n}"
+    },
+    "final": "Final",
+    "finalPens": "Final · pens",
+    "finalAet": "Final · AET",
+    "off": {
+      "STATUS_POSTPONED": "Postponed",
+      "STATUS_CANCELED": "Canceled",
+      "STATUS_SUSPENDED": "Suspended",
+      "STATUS_ABANDONED": "Abandoned",
+      "STATUS_FORFEIT": "Forfeit",
+      "STATUS_DELAYED": "Delayed"
+    }
+  },
+  "matches": {
+    "filter": "Filter by team…",
+    "live": "Live",
+    "upcoming": "Upcoming",
+    "results": "Results",
+    "noUpcoming": "No games scheduled.",
+    "window": { "one": "Showing the next 24 hours.", "other": "Showing the next {n} days." },
+    "noResults": "No recent results.",
+    "windowPast": { "one": "Showing the last day.", "other": "Showing the last {n} days." },
+    "noResultsFor": "No games match “{q}”."
+  },
+  "table": {
+    "team": "Team",
+    "season": "{season} season",
+    "group": "Group {x}",
+    "empty": "No standings for this season yet.",
+    "cols": {
+      "played": "GP", "won": "W", "drawn": "D", "lost": "L",
+      "goalsFor": "GF", "goalsAgainst": "GA", "goalDiff": "GD", "points": "Pts",
+      "wins": "W", "losses": "L", "pct": "PCT", "gb": "GB", "streak": "Strk", "last10": "L10"
+    },
+    "long": {
+      "played": "Games played", "won": "Won", "drawn": "Drawn", "lost": "Lost",
+      "goalsFor": "Goals for", "goalsAgainst": "Goals against", "goalDiff": "Goal difference", "points": "Points",
+      "wins": "Wins", "losses": "Losses", "pct": "Win percentage", "gb": "Games behind",
+      "streak": "Current streak", "last10": "Last 10 games"
+    }
+  },
+  "leaders": {
+    "empty": "No stats for this season yet.",
+    "pointsPerGame": "Points per game",
+    "reboundsPerGame": "Rebounds per game",
+    "assistsPerGame": "Assists per game",
+    "stealsPerGame": "Steals per game",
+    "blocksPerGame": "Blocks per game",
+    "3PointsMadePerGame": "3-pointers per game",
+    "avg": "Batting average",
+    "homeRuns": "Home runs",
+    "RBIs": "RBIs",
+    "ERA": "ERA",
+    "strikeouts": "Strikeouts",
+    "saves": "Saves"
+  },
+  "errors": {
+    "title": "Couldn't load the data.",
+    "status": "The server responded {status}.",
+    "unexpected": "ESPN returned data in an unexpected format.",
+    "stale": "Showing saved data: couldn't refresh ({error})."
+  },
+  "footer": {
+    "data": "Data from",
+    "disclaimer": "Frelytics is not affiliated with ESPN."
+  }
+}

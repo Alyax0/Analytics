@@ -1,0 +1,109 @@
+{
+  "meta": {
+    "title": "{name} · Frelytics"
+  },
+  "nav": {
+    "sport": "Deporte",
+    "sections": "Secciones",
+    "league": "Liga",
+    "live": "En vivo",
+    "partidos": "Partidos",
+    "tabla": "Tabla",
+    "lideres": "Líderes"
+  },
+  "sections": {
+    "partidos": { "subtitle": "En vivo, próximos partidos y resultados recientes." },
+    "tabla": { "subtitle": "Tabla de posiciones de la temporada." },
+    "lideres": { "subtitle": "Los mejores de la temporada en cada estadística." }
+  },
+  "common": {
+    "updated": "Actualizado {ago}",
+    "justNow": "recién",
+    "minutesAgo": { "one": "hace {n} minuto", "other": "hace {n} minutos" },
+    "hoursAgo": { "one": "hace {n} hora", "other": "hace {n} horas" },
+    "today": "Hoy",
+    "tomorrow": "Mañana",
+    "yesterday": "Ayer",
+    "dateToConfirm": "Fecha a confirmar",
+    "toConfirm": "A confirmar",
+    "retry": "Reintentar"
+  },
+  "match": {
+    "aria": "{a} contra {b}",
+    "live": "En vivo",
+    "halftime": "Entretiempo",
+    "quarter": "{n}C · {clock}",
+    "endQuarter": "Fin {n}C",
+    "overtime": "TE{n} · {clock}",
+    "inning": {
+      "top": "Alta {n}ª",
+      "bottom": "Baja {n}ª",
+      "middle": "Mitad {n}ª",
+      "end": "Fin {n}ª"
+    },
+    "final": "Final",
+    "finalPens": "Final · penales",
+    "finalAet": "Final · alargue",
+    "off": {
+      "STATUS_POSTPONED": "Postergado",
+      "STATUS_CANCELED": "Cancelado",
+      "STATUS_SUSPENDED": "Suspendido",
+      "STATUS_ABANDONED": "Abandonado",
+      "STATUS_FORFEIT": "Ganado por W.O.",
+      "STATUS_DELAYED": "Demorado"
+    }
+  },
+  "matches": {
+    "filter": "Filtrar por equipo…",
+    "live": "En vivo",
+    "upcoming": "Próximos",
+    "results": "Resultados",
+    "noUpcoming": "No hay partidos programados.",
+    "window": { "one": "Se muestran las próximas 24 horas.", "other": "Se muestran los próximos {n} días." },
+    "noResults": "No hay resultados recientes.",
+    "windowPast": { "one": "Se muestra el último día.", "other": "Se muestran los últimos {n} días." },
+    "noResultsFor": "Ningún partido coincide con «{q}»."
+  },
+  "table": {
+    "team": "Equipo",
+    "season": "Temporada {season}",
+    "group": "Grupo {x}",
+    "empty": "Todavía no hay tabla para esta temporada.",
+    "cols": {
+      "played": "PJ", "won": "G", "drawn": "E", "lost": "P",
+      "goalsFor": "GF", "goalsAgainst": "GC", "goalDiff": "DG", "points": "Pts",
+      "wins": "G", "losses": "P", "pct": "%", "gb": "JD", "streak": "Racha", "last10": "Últ. 10"
+    },
+    "long": {
+      "played": "Partidos jugados", "won": "Ganados", "drawn": "Empatados", "lost": "Perdidos",
+      "goalsFor": "Goles a favor", "goalsAgainst": "Goles en contra", "goalDiff": "Diferencia de gol", "points": "Puntos",
+      "wins": "Ganados", "losses": "Perdidos", "pct": "Porcentaje de victorias", "gb": "Juegos detrás del líder",
+      "streak": "Racha actual", "last10": "Últimos 10 partidos"
+    }
+  },
+  "leaders": {
+    "empty": "Todavía no hay estadísticas para esta temporada.",
+    "pointsPerGame": "Puntos por partido",
+    "reboundsPerGame": "Rebotes por partido",
+    "assistsPerGame": "Asistencias por partido",
+    "stealsPerGame": "Robos por partido",
+    "blocksPerGame": "Tapones por partido",
+    "3PointsMadePerGame": "Triples por partido",
+    "avg": "Promedio de bateo",
+    "homeRuns": "Jonrones",
+    "RBIs": "Carreras impulsadas",
+    "ERA": "Efectividad (ERA)",
+    "strikeouts": "Ponches",
+    "saves": "Salvamentos"
+  },
+  "errors": {
+    "title": "No se pudieron cargar los datos.",
+    "status": "El servidor respondió {status}.",
+    "unexpected": "ESPN devolvió datos con un formato inesperado.",
+    "stale": "Se muestran datos guardados: no se pudo actualizar ({error})."
+  },
+  "footer": {
+    "data": "Datos de",
+    "disclaimer": "Frelytics no está afiliado a ESPN."
+  }
+}
