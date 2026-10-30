@@ -37,7 +37,7 @@ export function dayLabel(ts) {
   if (dayKey(d) === offset(0)) return t('common.today');
   if (dayKey(d) === offset(1)) return t('common.tomorrow');
   if (dayKey(d) === offset(-1)) return t('common.yesterday');
-  const s = fmt({ weekday: 'short', day: 'numeric', month: 'short' }).format(d);
+  const s = fmt({ weekday: 'long', day: 'numeric', month: 'short' }).format(d);
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
@@ -75,46 +75,68 @@ function finalLabel(m) {
   return extra ? `${t('match.final')} · ${extra}` : t('match.final');
 }
 
-function badge(m, sportId) {
-  if (m.status === 'live') return `<span class="badge live">● ${esc(liveLabel(m, sportId))}</span>`;
-  if (m.status === 'final') return `<span class="badge">${esc(finalLabel(m))}</span>`;
+// Columna izquierda de cada fila: minuto/cuarto en vivo, "Final", postergado u hora
+function statusCell(m, sportId) {
+  if (m.status === 'live') return `<span class="st live"><span class="st-dot"></span>${esc(liveLabel(m, sportId))}</span>`;
+  if (m.status === 'final') return `<span class="st final">${esc(finalLabel(m))}</span>`;
   if (m.status === 'off') {
     const key = `match.off.${m.statusName}`;
     const label = t(key);
-    return `<span class="badge off">${esc(label === key ? m.detail : label)}</span>`;
+    return `<span class="st off">${esc(label === key ? m.detail : label)}</span>`;
   }
-  return `<span class="badge scheduled">${esc(m.timeValid && m.date ? formatTime(m.date) : t('common.toConfirm'))}</span>`;
+  return `<span class="st scheduled">${esc(m.timeValid && m.date ? formatTime(m.date) : t('common.toConfirm'))}</span>`;
 }
 
 // ---------- Componentes ----------
 
+// ESPN tiene una versión de cada logo pensada para fondo oscuro (/500-dark/):
+// sin ella, logos como el de los Rays o el Tottenham casi no se ven. Si no
+// existe, se vuelve al logo normal y, si tampoco carga, se oculta.
+const FALLBACK = "if(this.dataset.fb){this.src=this.dataset.fb;this.dataset.fb=''}else{this.style.visibility='hidden'}";
+
 function logo(url, cls = 'team-logo') {
   const src = safeUrl(url);
-  return src
-    ? `<img class="${cls}" src="${esc(src)}" alt="" loading="lazy" width="26" height="26" onerror="this.style.visibility='hidden'">`
-    : `<span class="${cls} empty"></span>`;
+  if (!src) return `<span class="${cls} empty"></span>`;
+  const dark = src.replace(/\/teamlogos\/([a-z]+)\/500\//, '/teamlogos/$1/500-dark/');
+  return `<img class="${cls}" src="${esc(dark)}" ${dark !== src ? `data-fb="${esc(src)}"` : ''} alt="" loading="lazy" width="26" height="26" onerror="${FALLBACK}">`;
 }
 
-function teamRow(side, m, showRecord) {
+function teamLine(side, m, showRecord) {
   const hasScore = (m.status === 'live' || m.status === 'final') && side.score !== null;
   const lost = m.status === 'final' && !side.winner && (m.home.winner || m.away.winner);
-  return `<div class="team-row${lost ? ' lost' : ''}">
+  return `<div class="row-team${lost ? ' lost' : ''}">
     ${logo(side.logo)}
-    <span class="team-name">${esc(side.short)}${showRecord && side.record ? `<span class="team-record">${esc(side.record)}</span>` : ''}</span>
+    <span class="team-name">${esc(side.short)}</span>
+    ${showRecord && side.record ? `<span class="team-record">${esc(side.record)}</span>` : ''}
     <span class="team-score">${hasScore ? esc(side.score) : ''}</span>
   </div>`;
 }
 
-export function matchCard(m, sport, i = 0) {
+export function matchRow(m, sport) {
   const [first, second] = sport.homeFirst ? [m.home, m.away] : [m.away, m.home];
-  const showRecord = sport.id !== 'futbol';
-  const head = [dayLabel(m.date), m.note].filter(Boolean).join(' · ');
   const label = t('match.aria', { a: first.name, b: second.name });
-  return `<article class="match is-${m.status}" style="animation-delay:${Math.min(i, 12) * 30}ms" aria-label="${esc(label)}">
-    <div class="match-head"><span class="match-note">${esc(head)}</span>${badge(m, sport.id)}</div>
-    ${teamRow(first, m, showRecord)}
-    ${teamRow(second, m, showRecord)}
-  </article>`;
+  return `<li class="row is-${m.status}" aria-label="${esc(label)}">
+    <div class="row-status">${statusCell(m, sport.id)}</div>
+    <div class="row-teams">
+      ${teamLine(first, m, sport.id !== 'futbol')}
+      ${teamLine(second, m, sport.id !== 'futbol')}
+      ${m.note ? `<div class="row-note">${esc(m.note)}</div>` : ''}
+    </div>
+  </li>`;
+}
+
+// Lista de partidos agrupada por día (en el orden en que vienen)
+export function matchDays(matches, sport) {
+  const days = [];
+  for (const m of matches) {
+    const key = m.date ? dayKey(new Date(m.date)) : 'tbd';
+    if (days.at(-1)?.key !== key) days.push({ key, date: m.date, list: [] });
+    days.at(-1).list.push(m);
+  }
+  return `<div class="days">${days.map((d) => `<section class="day">
+    <h3 class="day-title">${esc(dayLabel(d.date))}</h3>
+    <ul class="rows">${d.list.map((m) => matchRow(m, sport)).join('')}</ul>
+  </section>`).join('')}</div>`;
 }
 
 export function standingsTable(group, sport, title) {

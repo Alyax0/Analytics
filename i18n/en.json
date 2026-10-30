@@ -11,11 +11,6 @@
     "tabla": "Standings",
     "lideres": "Leaders"
   },
-  "sections": {
-    "partidos": { "subtitle": "Live, upcoming and recent games." },
-    "tabla": { "subtitle": "Season standings." },
-    "lideres": { "subtitle": "The season's best in each stat." }
-  },
   "common": {
     "updated": "Updated {ago}",
     "justNow": "just now",
