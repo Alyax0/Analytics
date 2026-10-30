@@ -64,6 +64,18 @@
     "windowPast": { "one": "Showing the last day.", "other": "Showing the last {n} days." },
     "noResultsFor": "No games match “{q}”."
   },
+  "offseason": {
+    "ended": "{season} season over",
+    "endedNoSeason": "Season over",
+    "champion": "🏆 Champion · {title}",
+    "finals": {
+      "nba": "NBA Finals",
+      "mlb": "World Series"
+    },
+    "noCalendar": "Next season's schedule hasn't been published yet.",
+    "lastPlayed": "Last games",
+    "next": "Next game: {date}."
+  },
   "table": {
     "team": "Team",
     "season": "{season} season",

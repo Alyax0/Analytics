@@ -101,6 +101,15 @@ main.container { flex: 1; padding-top: 24px; padding-bottom: 64px; }
 .match.is-final .team-row.lost { color: var(--text2); }
 .match.is-final .team-row.lost .team-score { color: var(--text3); }
 
+/* ── TEMPORADA TERMINADA ── */
+.season-end { background: linear-gradient(135deg, var(--accent2), var(--bg2) 60%); border: 1px solid var(--accent3); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 8px; }
+.season-end-kicker { font-family: var(--font-head); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--accent); }
+.season-end-champ { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
+.season-end-logo { width: 52px; height: 52px; object-fit: contain; flex-shrink: 0; }
+.season-end-name { font-family: var(--font-head); font-weight: 800; font-size: 22px; letter-spacing: -0.5px; line-height: 1.15; }
+.season-end-title { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.season-end-hint { font-size: 12px; color: var(--text3); margin-top: 12px; }
+
 /* ── TABLAS ── */
 .table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; margin-bottom: 18px; }
 .table-title { font-family: var(--font-head); font-size: 13px; font-weight: 700; color: var(--accent); padding: 10px 12px; background: var(--bg3); border-bottom: 1px solid var(--border); }

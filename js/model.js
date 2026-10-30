@@ -45,6 +45,9 @@ export function normalizeMatch(e) {
     period: st.period || 0,
     note: comp.notes?.[0]?.headline || null,
     venue: comp.venue?.fullName || null,
+    // Para detectar la final: serie de playoffs terminada (NBA, MLB) o partido "final" (copas)
+    seriesDone: comp.series?.completed === true,
+    seasonSlug: e.season?.slug || '',
     home: normalizeSide(competitors.find((c) => c.homeAway === 'home') || competitors[0]),
     away: normalizeSide(competitors.find((c) => c.homeAway === 'away') || competitors[1]),
   };
@@ -67,6 +70,35 @@ export function scoreboardRequests(sport, now = new Date()) {
   }
   const months = new Set([ymd(from).slice(0, 6), ymd(to).slice(0, 6)]);
   return [...months].map((m) => ({ dates: m, limit: 300 }));
+}
+
+// "2026-27 English Premier League" → "2026-27"; "2026" → "2026"
+export const seasonLabel = (name) => name?.match(/^\d{4}(-\d{2})?/)?.[0] || null;
+
+// AAAAMM del mes de un timestamp, para pedir el mes entero a ESPN
+export const monthOf = (ts) => ymd(new Date(ts)).slice(0, 6);
+
+// Scoreboard sin fecha: ESPN devuelve el día "actual" de la liga, que en el
+// receso es el último día jugado (o el próximo, si ya hay calendario)
+export function normalizeLatest(body) {
+  return {
+    matches: normalizeScoreboard(body),
+    season: seasonLabel(body.leagues?.[0]?.season?.displayName),
+  };
+}
+
+// Campeón: ganador del último partido de la final. En NBA y MLB la final se
+// reconoce por el nombre (sport.finals) y la serie terminada; en las copas,
+// porque ESPN marca la etapa como "final". Las ligas de fútbol no tienen.
+export function findChampion(matches, sport) {
+  const finals = matches
+    .filter((m) => m.status === 'final')
+    .filter((m) => (sport.finals ? m.seriesDone && sport.finals.test(m.note || '') : m.seasonSlug === 'final'))
+    .sort((a, b) => b.date - a.date);
+  const last = finals[0];
+  if (!last) return null;
+  const winner = last.home.winner ? last.home : last.away.winner ? last.away : null;
+  return winner ? { team: winner, date: last.date } : null;
 }
 
 // Separa en vivo / próximos / resultados dentro de la ventana del deporte
@@ -92,8 +124,7 @@ export function normalizeStandings(body, cfg) {
   if (!groups) throw new Error('standings sin grupos');
   const keys = new Set([cfg.sortBy, 'rank', ...cfg.columns.map((c) => c.key)]);
   return {
-    // "2026-27 English Premier League" → "2026-27"
-    season: groups[0].standings?.seasonDisplayName?.match(/^\d{4}(-\d{2})?/)?.[0] || null,
+    season: seasonLabel(groups[0].standings?.seasonDisplayName),
     groups: groups.map((g) => {
       const rows = (g.standings?.entries || []).map((en) => {
         const stats = {};
