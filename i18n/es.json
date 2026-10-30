@@ -11,11 +11,6 @@
     "tabla": "Tabla",
     "lideres": "Líderes"
   },
-  "sections": {
-    "partidos": { "subtitle": "En vivo, próximos partidos y resultados recientes." },
-    "tabla": { "subtitle": "Tabla de posiciones de la temporada." },
-    "lideres": { "subtitle": "Los mejores de la temporada en cada estadística." }
-  },
   "common": {
     "updated": "Actualizado {ago}",
     "justNow": "recién",

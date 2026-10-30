@@ -4,7 +4,9 @@ import {
   normalizeScoreboard, normalizeLatest, scoreboardRequests, splitMatches, normalizeStandings, normalizeLeaders,
   findChampion, monthOf,
 } from './model.js';
-import { esc, ago, dayLabel, matchCard, standingsTable, leaderCard, seasonEndCard, skeletons, emptyState, errorState } from './ui.js';
+import {
+  esc, ago, dayLabel, matchRow, matchDays, standingsTable, leaderCard, seasonEndCard, skeletons, emptyState, errorState,
+} from './ui.js';
 import { t, setLang, preferredLang } from './i18n.js';
 
 // Caché del navegador por tipo de dato (el CDN de Vercel cachea aparte)
@@ -135,7 +137,9 @@ async function load(sport, league, section, { force = false } = {}) {
   try {
     const { data, results } = await FETCHERS[section](sport, league, force);
     e.data = data;
-    e.at = Math.min(...results.map((r) => r.at));
+    // El pedido más reciente: los días viejos vienen de una caché de 6 h y no
+    // dicen nada de lo fresco que está lo de hoy
+    e.at = Math.max(...results.map((r) => r.at));
     e.stale = results.some((r) => r.stale);
     e.error = results.find((r) => r.error)?.error || null;
     e.status = 'ready';
@@ -160,7 +164,10 @@ function ensureLoaded(force = false) {
 
 const app = document.getElementById('app');
 let query = '';
+let searchOpen = false;
 let lastViewKey = '';
+
+const SEARCH_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 
 function updatedLine(e) {
   return e.at ? `<span class="updated">${esc(t('common.updated', { ago: ago(e.at) }))}</span>` : '';
@@ -189,9 +196,12 @@ function matchLists(sport, league, { matches, offseason }) {
     return emptyState(t('matches.noResultsFor', { q }));
   }
 
-  const block = (label, list, empty, dot = false) => `
-    <h2 class="section-label">${dot ? '<span class="dot"></span>' : ''}${esc(label)} <span class="count">${list.length || ''}</span></h2>
-    ${list.length ? `<div class="grid">${list.map((m, i) => matchCard(m, sport, i)).join('')}</div>` : empty}`;
+  // Los en vivo van en una sola lista; el resto, agrupado por día
+  const block = (label, list, empty, live = false) => `
+    <h2 class="section-label">${live ? '<span class="dot"></span>' : ''}${esc(label)} <span class="count">${list.length || ''}</span></h2>
+    ${!list.length ? empty
+    : live ? `<ul class="rows">${list.map((m) => matchRow(m, sport)).join('')}</ul>`
+      : matchDays(list, sport)}`;
 
   const noUpcoming = offseason?.next
     ? emptyState(t('matches.noUpcoming'), t('offseason.next', { date: dayLabel(offseason.next) }))
@@ -210,13 +220,15 @@ function matchLists(sport, league, { matches, offseason }) {
 
 function viewPartidos(sport, league) {
   const e = entry(league.id, 'partidos');
-  return `
-    <div class="toolbar">
+  // El filtro queda escondido detrás de la lupa del encabezado
+  const search = searchOpen
+    ? `<div class="search-row">
       <label class="visually-hidden" for="filter">${esc(t('matches.filter'))}</label>
       <input id="filter" class="filter-input" type="search" autocomplete="off" placeholder="${esc(t('matches.filter'))}" value="${esc(query)}">
-      ${updatedLine(e)}
-    </div>
-    <div id="match-lists">${bodyFor(e, skeletons(6), (data) => matchLists(sport, league, data))}</div>`;
+    </div>`
+    : '';
+  return `${search}
+    <div id="match-lists">${bodyFor(e, skeletons(6, 'row-sk'), (data) => matchLists(sport, league, data))}</div>`;
 }
 
 function viewTabla(sport, league) {
@@ -229,8 +241,7 @@ function viewTabla(sport, league) {
     const tables = data.groups.map((g) => standingsTable(g, sport, multi ? groupName(g.name) : null)).join('');
     // Las conferencias de NBA y MLB entran lado a lado; las tablas de fútbol tienen demasiadas columnas
     const sideBySide = data.groups.length === 2 && sport.standings.columns.length <= 6;
-    return `${data.season ? `<p class="updated" style="margin-bottom:10px">${esc(t('table.season', { season: data.season }))}</p>` : ''}
-      ${sideBySide ? `<div class="tables-2">${tables}</div>` : tables}`;
+    return sideBySide ? `<div class="tables-2">${tables}</div>` : tables;
   });
 }
 
@@ -238,8 +249,7 @@ function viewLideres(sport, league) {
   const e = entry(league.id, 'lideres');
   return bodyFor(e, skeletons(3), (data) => {
     if (!data.categories.length) return emptyState(t('leaders.empty'));
-    return `${data.season ? `<p class="updated" style="margin-bottom:10px">${esc(t('table.season', { season: data.season }))}</p>` : ''}
-      <div class="leaders">${data.categories.map((c) => leaderCard(c, sport)).join('')}</div>`;
+    return `<div class="leaders">${data.categories.map((c) => leaderCard(c, sport)).join('')}</div>`;
   });
 }
 
@@ -301,14 +311,24 @@ function render() {
   app.classList.toggle('static', viewKey === lastViewKey);
   lastViewKey = viewKey;
 
+  // A la derecha del título: "Actualizado hace…" y la lupa en Partidos; la temporada en Tabla y Líderes
+  let tools = '';
+  if (section === 'partidos') {
+    tools = `${updatedLine(e)}
+      <button type="button" class="icon-btn" data-action="search" aria-expanded="${searchOpen}" aria-controls="filter"
+        aria-label="${esc(t('matches.filter'))}" title="${esc(t('matches.filter'))}">${SEARCH_ICON}</button>`;
+  } else if (e.status === 'ready' && e.data.season) {
+    tools = `<span class="updated">${esc(t('table.season', { season: e.data.season }))}</span>`;
+  }
+
   // Si el foco estaba en el filtro, se recupera después de redibujar
   const filterFocused = document.activeElement?.id === 'filter';
   app.innerHTML = `
-    <div class="page-head"><h1>${title}</h1><p>${esc(t(`sections.${section}.subtitle`))}</p></div>
+    <div class="page-head"><h1>${title}</h1><div class="head-tools">${tools}</div></div>
     ${chips}
     ${VIEWS[section](sport, league)}`;
-  if (filterFocused) {
-    const input = document.getElementById('filter');
+  const input = filterFocused && document.getElementById('filter');
+  if (input) {
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
   }
@@ -326,7 +346,10 @@ window.addEventListener('hashchange', () => {
       // no se recuerda la liga, no pasa nada
     }
   }
-  if (prev.league.id !== route.league.id) query = '';
+  if (prev.league.id !== route.league.id) {
+    query = '';
+    searchOpen = false;
+  }
   render();
   ensureLoaded();
   if (prev.sport.id !== route.sport.id || prev.league.id !== route.league.id) window.scrollTo(0, 0);
@@ -339,12 +362,26 @@ app.addEventListener('input', (ev) => {
   if (e.status === 'ready') document.getElementById('match-lists').innerHTML = matchLists(route.sport, route.league, e.data);
 });
 
+// Abrir la lupa enfoca el filtro; cerrarla lo vacía
+function toggleSearch(open) {
+  searchOpen = open;
+  if (!open) query = '';
+  render();
+  if (open) document.getElementById('filter')?.focus();
+  else app.querySelector('[data-action="search"]')?.focus();
+}
+
 app.addEventListener('click', (ev) => {
   if (ev.target.closest('[data-action="retry"]')) {
     const { sport, league, section } = route;
     load(sport, league, section, { force: true });
     render();
   }
+  if (ev.target.closest('[data-action="search"]')) toggleSearch(!searchOpen);
+});
+
+app.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape' && ev.target.id === 'filter') toggleSearch(false);
 });
 
 // Actualización automática: más seguido si hay partidos en vivo, nunca con la pestaña oculta
@@ -355,7 +392,7 @@ setInterval(() => {
   if (e.status === 'ready' && Date.now() - e.at >= every) load(route.sport, route.league, 'partidos', { force: true });
   else if (e.status === 'ready') {
     // solo refresca el "actualizado hace…"
-    const line = app.querySelector('.toolbar .updated');
+    const line = app.querySelector('.page-head .updated');
     if (line) line.textContent = t('common.updated', { ago: ago(e.at) });
   }
 }, 15 * 1000);
