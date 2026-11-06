@@ -10,6 +10,7 @@
     "partidos": "Partidos",
     "tabla": "Tabla",
     "lideres": "Líderes",
+    "goleadores": "Goleadores",
     "ranking": "Ranking"
   },
   "common": {
@@ -116,8 +117,39 @@
     "Qualifying2ndRound": "Clasificación · 2.ª ronda",
     "QualifyingFinal": "Clasificación · ronda final"
   },
+  "player": {
+    "open": "Ver la ficha de {name}",
+    "close": "Cerrar",
+    "age": "{n} años",
+    "stats": "Estadísticas",
+    "split": "Temporada",
+    "lastGames": "Últimos partidos",
+    "game": "Partido",
+    "noStats": "ESPN no tiene estadísticas de este jugador.",
+    "result": { "W": "G", "L": "P", "D": "E", "T": "E" },
+    "splits": {
+      "RegularSeason": "Temporada regular",
+      "Postseason": "Playoffs",
+      "Career": "Carrera"
+    }
+  },
+  "stats": {
+    "GP": "PJ", "APP": "PJ", "STRT": "TIT", "STARTSUB": "TIT (SUP)",
+    "FC": "FC", "FA": "FR", "YC": "TA", "RC": "TR", "G": "G", "A": "A",
+    "SHOT": "TIR", "SOG": "TAP", "OFF": "FDJ",
+    "AB": "VB", "R": "C", "H": "H", "BB": "BB", "SO": "K",
+    "values": { "Started": "Titular", "Substitute": "Suplente", "Sub": "Suplente", "Bench": "Banco" }
+  },
+  "positions": {
+    "futbol": { "Goalkeeper": "Arquero", "Defender": "Defensor", "Midfielder": "Mediocampista", "Forward": "Delantero" },
+    "nba": { "Guard": "Base/escolta", "Forward": "Alero", "Center": "Pívot", "PointGuard": "Base", "ShootingGuard": "Escolta", "SmallForward": "Alero", "PowerForward": "Ala-pívot" },
+    "mlb": { "Pitcher": "Lanzador", "StartingPitcher": "Lanzador abridor", "ReliefPitcher": "Relevista", "Catcher": "Receptor", "FirstBase": "Primera base", "SecondBase": "Segunda base", "ThirdBase": "Tercera base", "Shortstop": "Campocorto", "LeftField": "Jardinero izquierdo", "CenterField": "Jardinero central", "RightField": "Jardinero derecho", "Outfielder": "Jardinero", "DesignatedHitter": "Bateador designado" }
+  },
   "leaders": {
     "empty": "Todavía no hay estadísticas para esta temporada.",
+    "apps": "{n} PJ",
+    "goalsLeaders": "Goles",
+    "assistsLeaders": "Asistencias",
     "pointsPerGame": "Puntos por partido",
     "reboundsPerGame": "Rebotes por partido",
     "assistsPerGame": "Asistencias por partido",

@@ -230,6 +230,95 @@ export function normalizeStandings(body, cfg) {
   };
 }
 
+// ---------- Goleadores (fútbol) ----------
+// Mismo formato que los líderes de NBA/MLB para reusar las tarjetas. ESPN no
+// trae foto de los futbolistas: se usa el escudo del club.
+
+export function normalizeScorers(body, size = 10) {
+  const cats = body?.stats;
+  if (!Array.isArray(cats)) throw new Error('statistics sin stats');
+  return {
+    season: seasonLabel(body.season?.displayName),
+    categories: cats.map((c) => ({
+      name: c.name,
+      abbr: c.abbreviation || '',
+      leaders: (c.leaders || []).slice(0, size).map((l) => {
+        const a = l.athlete || {};
+        const team = a.team || {};
+        // "APP=16 G=9 A=5": partidos jugados para mostrar al lado del equipo
+        const apps = (a.statistics || []).find((s) => s.abbreviation === 'APP')?.displayValue;
+        return {
+          id: a.id || null,
+          name: a.displayName || '?',
+          photo: team.logos?.[0]?.href || null,
+          team: team.abbreviation || team.displayName || '',
+          apps: apps ?? null,
+          value: typeof l.value === 'number' ? l.value : Number(l.value),
+        };
+      }),
+    })),
+  };
+}
+
+// ---------- Ficha de jugador ----------
+
+function parseHeight(text) {
+  const m = /(\d+)'\s*(\d+)?/.exec(text || '');
+  return m ? Number(m[1]) * 12 + Number(m[2] || 0) : null;
+}
+
+export function normalizePlayerBio(body) {
+  const a = body?.athlete;
+  if (!a) throw new Error('player sin athlete');
+  return {
+    id: a.id,
+    name: a.displayName || '?',
+    photo: a.headshot?.href || null,
+    flag: a.flag?.href || null,
+    country: a.citizenship || a.flag?.alt || '',
+    team: a.team ? { name: a.team.displayName || '', logo: a.team.logos?.[0]?.href || null } : null,
+    position: a.position?.displayName || '',
+    jersey: a.jersey || '',
+    age: a.age ?? null,
+    birthPlace: a.displayBirthPlace || '',
+    height: a.displayHeight || '',
+    weight: a.displayWeight || '',
+    // En pulgadas y libras, para mostrarlos en metros y kilos. ESPN solo los da
+    // como texto: "6' 8\"" y "230 lbs"
+    heightIn: parseHeight(a.displayHeight),
+    weightLb: Number.parseInt(a.displayWeight, 10) || null,
+    // Las 4 estadísticas que ESPN destaca para la temporada (PTS, REB, AST, FG% / G, A…)
+    summary: (a.statsSummary?.statistics || []).map((s) => ({ label: s.abbreviation, value: s.displayValue })),
+  };
+}
+
+// Temporada y carrera (NBA, MLB) o una fila por competición (fútbol),
+// más los últimos partidos con rival y resultado
+export function normalizePlayerOverview(body) {
+  const st = body?.statistics;
+  const gl = body?.gameLog;
+  const glStats = gl?.statistics?.[0];
+  return {
+    labels: st?.labels || [],
+    names: st?.displayNames || [],
+    splits: (st?.splits || []).map((s) => ({ name: s.displayName || '', stats: s.stats || [] })),
+    gameLabels: glStats?.labels || [],
+    gameNames: glStats?.displayNames || [],
+    games: (glStats?.events || []).map((ev) => {
+      const info = gl.events?.[ev.eventId] || {};
+      return {
+        date: info.gameDate ? new Date(info.gameDate).getTime() : null,
+        atVs: info.atVs || '',
+        opponent: info.opponent?.abbreviation || info.opponent?.displayName || '',
+        opponentLogo: info.opponent?.logo || null,
+        result: info.gameResult || '',
+        score: info.score || '',
+        stats: ev.stats || [],
+      };
+    }),
+  };
+}
+
 // ---------- Líderes ----------
 
 export function normalizeLeaders(body, wanted) {
@@ -244,6 +333,7 @@ export function normalizeLeaders(body, wanted) {
         name: c.name,
         abbr: c.abbreviation || '',
         leaders: (c.leaders || []).slice(0, 5).map((l) => ({
+          id: l.athlete?.id || null,
           name: l.athlete?.displayName || '?',
           photo: l.athlete?.headshot?.href || null,
           team: l.team?.abbreviation || '',

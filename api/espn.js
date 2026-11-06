@@ -32,6 +32,10 @@ const LEAGUES = {
 const SITE = 'https://site.api.espn.com/apis/site/v2/sports';
 const SITE_V3 = 'https://site.api.espn.com/apis/site/v3/sports';
 const STANDINGS = 'https://site.api.espn.com/apis/v2/sports';
+const WEB = 'https://site.web.api.espn.com/apis/site/v2/sports';
+const COMMON = 'https://site.web.api.espn.com/apis/common/v3/sports';
+
+const SOCCER = Object.keys(LEAGUES).filter((k) => LEAGUES[k].startsWith('soccer/'));
 
 const DAY = /^\d{8}$/;
 const MONTH = /^\d{6}$/;
@@ -44,6 +48,7 @@ const PARAMS = {
   dates: (v) => DAY.test(v) || MONTH.test(v), // los rangos AAAAMMDD-AAAAMMDD dan 400 en ESPN
   event: (v) => ID.test(v),
   team: (v) => ID.test(v),
+  athlete: (v) => ID.test(v),
   season: (v) => SEASON.test(v),
   seasontype: (v) => v === '2' || v === '3', // 2 = temporada regular, 3 = playoffs
   lang: (v) => v === 'es' || v === 'en',
@@ -63,7 +68,7 @@ function scoreboardTtl(params) {
 }
 
 // ruta → URL de ESPN, segundos de caché y parámetros permitidos.
-// `team` va en la ruta, no en la query.
+// `team` y `athlete` van en la ruta, no en la query.
 const PATHS = {
   scoreboard: { url: (l) => `${SITE}/${l}/scoreboard`, ttl: scoreboardTtl, params: ['dates', 'limit'] },
   summary: { url: (l) => `${SITE}/${l}/summary`, ttl: 30, params: ['event'], required: ['event'] },
@@ -73,6 +78,18 @@ const PATHS = {
   schedule: { url: (l, q) => `${SITE}/${l}/teams/${q.get('team')}/schedule`, ttl: 600, params: ['team', 'season'], required: ['team'] },
   leaders: { url: (l) => `${SITE_V3}/${l}/leaders`, ttl: 3600, params: ['season', 'seasontype'], only: ['nba', 'mlb'] },
   rankings: { url: (l) => `${SITE}/${l}/rankings`, ttl: 3600, params: [], only: ['atp', 'wta'] },
+  // Goleadores y asistidores de una liga de fútbol (top 50 de cada uno)
+  scorers: { url: (l) => `${WEB}/${l}/statistics`, ttl: 3600, params: [], only: SOCCER },
+  // Ficha del jugador: datos personales + resumen, y temporada/carrera/últimos partidos.
+  // En tenis ESPN responde 500, así que no se permite.
+  player: {
+    url: (l, q) => `${COMMON}/${l}/athletes/${q.get('athlete')}`,
+    ttl: 1800, params: ['athlete'], required: ['athlete'], only: [...SOCCER, 'nba', 'mlb'],
+  },
+  'player-overview': {
+    url: (l, q) => `${COMMON}/${l}/athletes/${q.get('athlete')}/overview`,
+    ttl: 1800, params: ['athlete'], required: ['athlete'], only: [...SOCCER, 'nba', 'mlb'],
+  },
 };
 
 function parse(query) {
@@ -92,6 +109,7 @@ function parse(query) {
 
   const base = route.url(LEAGUES[league], params);
   params.delete('team');
+  params.delete('athlete');
   const ttl = typeof route.ttl === 'function' ? route.ttl(params) : route.ttl;
   const qs = params.toString();
   return { url: base + (qs ? '?' + qs : ''), ttl, path };
