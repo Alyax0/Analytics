@@ -350,6 +350,12 @@ function render() {
     <div class="page-head"><h1>${title}</h1><div class="head-tools">${tools}</div></div>
     ${chips}
     ${VIEWS[section](sport, league)}`;
+  // En el celular la fila de ligas se desliza: que la elegida quede a la vista
+  const leaguesNav = app.querySelector('.leagues');
+  const current = leaguesNav?.querySelector('[aria-current="true"]');
+  if (current && leaguesNav.scrollWidth > leaguesNav.clientWidth) {
+    leaguesNav.scrollLeft = Math.max(0, current.offsetLeft - leaguesNav.offsetLeft - 16);
+  }
   const input = filterFocused && document.getElementById('filter');
   if (input) {
     input.focus();

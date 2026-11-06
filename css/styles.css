@@ -12,12 +12,14 @@
   --accent3: color-mix(in srgb, var(--accent) 28%, transparent);
   --red: #ff4d4d; --amber: #f5a623; --blue: #4d9fff;
   --radius: 14px;
-  --font-head: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif;
+  /* Una sola familia: Inter tiene números parejos y del mismo ancho (tabulares) */
+  --font-head: 'Inter', system-ui, sans-serif; --font-body: 'Inter', system-ui, sans-serif;
 }
 
 html { scroll-behavior: smooth; }
 body {
   font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh;
+  font-variant-numeric: tabular-nums;
   display: flex; flex-direction: column;
   background-image: radial-gradient(ellipse 80% 50% at 10% -10%, color-mix(in srgb, var(--accent) 7%, transparent) 0%, transparent 55%);
   background-attachment: fixed;
@@ -68,7 +70,10 @@ main.container { flex: 1; padding-top: 16px; padding-bottom: 64px; }
 /* En el celular el título de la liga necesita ese espacio */
 .head-tools .updated { display: none; }
 
-.leagues { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; scrollbar-width: none; }
+/* En el celular, una fila que se desliza con un degradé a la derecha que avisa que hay más;
+   desde 600 px se reparten en varias líneas para que ninguna quede cortada */
+.leagues { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); }
 .leagues::-webkit-scrollbar { display: none; }
 .league-chip { display: flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg2); white-space: nowrap; font-size: 13px; font-weight: 500; color: var(--text2); text-decoration: none; }
 .league-chip:hover { color: var(--text); border-color: var(--border2); }
@@ -222,6 +227,7 @@ button.leader-row:focus-visible { outline: 2px solid var(--accent); outline-offs
 @media (min-width: 600px) {
   .brand-tag, .live-label, .head-tools .updated { display: inline; }
   .sport-opt { padding: 5px 10px; }
+  .leagues { flex-wrap: wrap; overflow: visible; -webkit-mask-image: none; mask-image: none; }
   .leaders { grid-template-columns: repeat(2, 1fr); }
   .page-head h1 { font-size: 24px; }
   .h1-logo { width: 30px; height: 30px; }
