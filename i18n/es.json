@@ -13,6 +13,25 @@
     "goleadores": "Goleadores",
     "ranking": "Ranking"
   },
+  "sports": {
+    "futbol": "Fútbol",
+    "nba": "Básquet",
+    "mlb": "Béisbol",
+    "tenis": "Tenis"
+  },
+  "hero": {
+    "live": "<strong>{n}</strong> en vivo",
+    "upcoming": "<strong>{n}</strong> próximos",
+    "results": "<strong>{n}</strong> resultados",
+    "season": "temporada <strong>{season}</strong>",
+    "teams": "<strong>{n}</strong> equipos",
+    "top": "top <strong>{n}</strong>",
+    "ended": "temporada <strong>{season}</strong> terminada"
+  },
+  "featured": {
+    "live": "En vivo ahora",
+    "next": "Próximo partido"
+  },
   "common": {
     "updated": "Actualizado {ago}",
     "justNow": "recién",
