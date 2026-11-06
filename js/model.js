@@ -53,9 +53,89 @@ export function normalizeMatch(e) {
   };
 }
 
+// ---------- Tenis ----------
+// Cada evento es un torneo; los partidos van en groupings (singles, dobles).
+// Se muestran solo los singles. En vez de un resultado hay sets: [{ v, tb, won }].
+
+function normalizePlayer(c) {
+  const a = c?.athlete || {};
+  return {
+    id: c?.id || null,
+    name: a.displayName || '?',
+    short: a.shortName || a.displayName || '?',
+    abbr: '',
+    logo: a.flag?.href || null, // bandera del país
+    score: null,
+    winner: c?.winner === true,
+    record: null,
+    sets: (c?.linescores || []).map((s) => ({ v: s.value ?? '', tb: s.tiebreak ?? null, won: s.winner === true })),
+  };
+}
+
+const isTbd = (p) => !p.id || p.name === '?' || p.name === 'TBD';
+
+function normalizeTennisMatch(event, c) {
+  const st = c.status || {};
+  const type = st.type || {};
+  let status = 'scheduled';
+  if (OFF_STATUSES.has(type.name)) status = 'off';
+  else if (type.state === 'in') status = 'live';
+  else if (type.state === 'post') status = 'final';
+  // order 1 primero: ESPN pone ahí al cabeza de serie mejor ubicado
+  const [p1, p2] = [...(c.competitors || [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  return {
+    id: String(c.id),
+    date: c.date ? new Date(c.date).getTime() : null,
+    timeValid: c.timeValid !== false,
+    status,
+    statusName: type.name || '',
+    detail: type.shortDetail || '',
+    clock: '',
+    period: st.period || 0,
+    note: null,
+    tournament: event.shortName || event.name || null,
+    round: c.round?.displayName || null,
+    venue: null,
+    seriesDone: false,
+    seasonSlug: '',
+    home: normalizePlayer(p1),
+    away: normalizePlayer(p2),
+  };
+}
+
 export function normalizeScoreboard(body) {
   if (!body || !Array.isArray(body.events)) throw new Error('scoreboard sin events');
+  if (body.events.some((e) => e.groupings)) {
+    return body.events.flatMap((e) => (e.groupings || [])
+      .filter((g) => /singles/i.test(g.grouping?.slug || g.grouping?.displayName || ''))
+      .flatMap((g) => (g.competitions || []).map((c) => normalizeTennisMatch(e, c)))
+      // Cruces sin jugadores definidos (ESPN deja "TBD vs TBD" en los cuadros cancelados)
+      .filter((m) => !(isTbd(m.home) && isTbd(m.away))));
+  }
   return body.events.map(normalizeMatch);
+}
+
+// Ranking ATP/WTA: los primeros `size` con su bandera, puntos y movimiento
+export function normalizeRankings(body, size) {
+  const r = body?.rankings?.[0];
+  if (!r || !Array.isArray(r.ranks)) throw new Error('rankings sin ranks');
+  return {
+    season: null,
+    updated: r.update ? new Date(r.update).getTime() : null,
+    rows: r.ranks.slice(0, size).map((x) => {
+      const a = x.athlete || {};
+      const flag = typeof a.flag === 'string' ? a.flag : a.flag?.href;
+      return {
+        rank: x.current,
+        // "+1", "-3" o "-" (sin cambio)
+        trend: Number.parseInt(x.trend, 10) || 0,
+        points: x.points ?? null,
+        name: a.displayName || '?',
+        flag: flag || null,
+        country: a.flagAltText || '',
+      };
+    }),
+  };
 }
 
 // Parámetros de cada pedido a /api/espn?path=scoreboard para cubrir

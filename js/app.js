@@ -1,11 +1,12 @@
 import { SPORTS, DEFAULT_SPORT } from './sports.js';
 import { espnGet } from './api.js';
 import {
-  normalizeScoreboard, normalizeLatest, scoreboardRequests, splitMatches, normalizeStandings, normalizeLeaders,
+  normalizeScoreboard, normalizeLatest, scoreboardRequests, splitMatches, normalizeStandings, normalizeLeaders, normalizeRankings,
   findChampion, monthOf,
 } from './model.js';
 import {
-  esc, ago, dayLabel, matchRow, matchDays, standingsTable, leaderCard, seasonEndCard, skeletons, emptyState, errorState,
+  esc, ago, dayLabel, formatLongDate, matchRow, matchDays, standingsTable, leaderCard, rankingTable, seasonEndCard, skeletons, emptyState,
+  errorState,
 } from './ui.js';
 import { t, setLang, preferredLang } from './i18n.js';
 
@@ -14,7 +15,8 @@ const TTL = { recent: 60 * 1000, old: 6 * 3600 * 1000, standings: 10 * 60 * 1000
 // Con partidos en vivo se actualiza cada minuto; si no, cada 5
 const REFRESH_LIVE = 60 * 1000;
 const REFRESH_IDLE = 5 * 60 * 1000;
-const LEAGUE_KEY = 'futbol_league';
+// Última liga elegida en cada deporte con varias ("futbol_league", "tenis_league")
+const leagueKey = (sport) => `${sport.id}_league`;
 
 // ===================== RUTAS =====================
 // #/<deporte>[/<liga>][/<sección>]. La liga solo va en fútbol; la sección
@@ -23,7 +25,7 @@ const LEAGUE_KEY = 'futbol_league';
 function savedLeague(sport) {
   if (sport.leagues.length === 1) return sport.leagues[0];
   try {
-    const id = localStorage.getItem(LEAGUE_KEY);
+    const id = localStorage.getItem(leagueKey(sport));
     return sport.leagues.find((l) => l.id === id) || sport.leagues[0];
   } catch {
     return sport.leagues[0];
@@ -116,6 +118,12 @@ const FETCHERS = {
   async tabla(sport, league, force) {
     const r = await espnGet(league.id, 'standings', {}, {
       ttl: TTL.standings, force, normalize: (b) => normalizeStandings(b, sport.standings),
+    });
+    return { data: r.data, results: [r] };
+  },
+  async ranking(sport, league, force) {
+    const r = await espnGet(league.id, 'rankings', {}, {
+      ttl: TTL.leaders, force, normalize: (b) => normalizeRankings(b, sport.rankingSize),
     });
     return { data: r.data, results: [r] };
   },
@@ -253,7 +261,12 @@ function viewLideres(sport, league) {
   });
 }
 
-const VIEWS = { partidos: viewPartidos, tabla: viewTabla, lideres: viewLideres };
+function viewRanking(sport, league) {
+  const e = entry(league.id, 'ranking');
+  return bodyFor(e, skeletons(1, 'tall'), (data) => (data.rows.length ? rankingTable(data) : emptyState(t('ranking.empty'))));
+}
+
+const VIEWS = { partidos: viewPartidos, tabla: viewTabla, lideres: viewLideres, ranking: viewRanking };
 
 function leagueLogo(league, cls) {
   if (!Number.isInteger(league.logo)) return '';
@@ -319,6 +332,8 @@ function render() {
         aria-label="${esc(t('matches.filter'))}" title="${esc(t('matches.filter'))}">${SEARCH_ICON}</button>`;
   } else if (e.status === 'ready' && e.data.season) {
     tools = `<span class="updated">${esc(t('table.season', { season: e.data.season }))}</span>`;
+  } else if (e.status === 'ready' && e.data.updated) {
+    tools = `<span class="updated">${esc(t('ranking.updated', { date: formatLongDate(e.data.updated) }))}</span>`;
   }
 
   // Si el foco estaba en el filtro, se recupera después de redibujar
@@ -341,7 +356,7 @@ window.addEventListener('hashchange', () => {
   route = parseHash();
   if (route.sport.leagues.length > 1) {
     try {
-      localStorage.setItem(LEAGUE_KEY, route.league.id);
+      localStorage.setItem(leagueKey(route.sport), route.league.id);
     } catch {
       // no se recuerda la liga, no pasa nada
     }

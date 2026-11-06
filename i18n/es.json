@@ -9,7 +9,8 @@
     "live": "En vivo",
     "partidos": "Partidos",
     "tabla": "Tabla",
-    "lideres": "Líderes"
+    "lideres": "Líderes",
+    "ranking": "Ranking"
   },
   "common": {
     "updated": "Actualizado {ago}",
@@ -36,6 +37,9 @@
       "middle": "Mitad {n}ª",
       "end": "Fin {n}ª"
     },
+    "set": "Set {n}",
+    "retired": "Abandono",
+    "walkover": "W.O.",
     "final": "Final",
     "finalPens": "Final · penales",
     "finalAet": "Final · alargue",
@@ -87,6 +91,30 @@
       "wins": "Ganados", "losses": "Perdidos", "pct": "Porcentaje de victorias", "gb": "Juegos detrás del líder",
       "streak": "Racha actual", "last10": "Últimos 10 partidos"
     }
+  },
+  "ranking": {
+    "player": "Jugador",
+    "points": "Puntos",
+    "trend": "+/-",
+    "trendLong": "Puestos que subió o bajó desde el ranking anterior",
+    "up": "Subió {n}",
+    "down": "Bajó {n}",
+    "updated": "Ranking del {date}",
+    "empty": "No hay ranking disponible."
+  },
+  "rounds": {
+    "Final": "Final",
+    "Semifinal": "Semifinal",
+    "Quarterfinal": "Cuartos de final",
+    "Roundof16": "Octavos de final",
+    "Round1": "1.ª ronda",
+    "Round2": "2.ª ronda",
+    "Round3": "3.ª ronda",
+    "Round4": "4.ª ronda",
+    "GroupStage": "Fase de grupos",
+    "Qualifying1stRound": "Clasificación · 1.ª ronda",
+    "Qualifying2ndRound": "Clasificación · 2.ª ronda",
+    "QualifyingFinal": "Clasificación · ronda final"
   },
   "leaders": {
     "empty": "Todavía no hay estadísticas para esta temporada.",

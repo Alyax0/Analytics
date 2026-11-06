@@ -9,7 +9,8 @@
     "live": "Live",
     "partidos": "Games",
     "tabla": "Standings",
-    "lideres": "Leaders"
+    "lideres": "Leaders",
+    "ranking": "Rankings"
   },
   "common": {
     "updated": "Updated {ago}",
@@ -36,6 +37,9 @@
       "middle": "Mid {n}",
       "end": "End {n}"
     },
+    "set": "Set {n}",
+    "retired": "Retired",
+    "walkover": "Walkover",
     "final": "Final",
     "finalPens": "Final · pens",
     "finalAet": "Final · AET",
@@ -87,6 +91,16 @@
       "wins": "Wins", "losses": "Losses", "pct": "Win percentage", "gb": "Games behind",
       "streak": "Current streak", "last10": "Last 10 games"
     }
+  },
+  "ranking": {
+    "player": "Player",
+    "points": "Points",
+    "trend": "+/-",
+    "trendLong": "Places gained or lost since the previous ranking",
+    "up": "Up {n}",
+    "down": "Down {n}",
+    "updated": "Rankings as of {date}",
+    "empty": "No rankings available."
   },
   "leaders": {
     "empty": "No stats for this season yet.",

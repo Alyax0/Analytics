@@ -100,6 +100,23 @@ export const SPORTS = {
     // 'avg' se muestra como .300
     leaders: { avg: 'avg', homeRuns: 0, RBIs: 0, ERA: 2, strikeouts: 0, saves: 0 },
   },
+  tenis: {
+    id: 'tenis',
+    brand: 'TEN',
+    accent: '#c6e03a',
+    // ESPN agrupa por torneo y cada torneo trae todo su cuadro: con el mes
+    // entero alcanza un pedido (dos al cambiar de mes)
+    fetchBy: 'month',
+    pastDays: 2,
+    nextDays: 2,
+    homeFirst: true,
+    sections: ['partidos', 'ranking'],
+    leagues: [
+      { id: 'atp', name: 'ATP' },
+      { id: 'wta', name: 'WTA' },
+    ],
+    rankingSize: 100,
+  },
 };
 
 export const DEFAULT_SPORT = 'futbol';
