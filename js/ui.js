@@ -108,22 +108,9 @@ function logo(url, cls = 'team-logo') {
   return `<img class="${cls}" src="${esc(dark)}" ${dark !== src ? `data-fb="${esc(src)}"` : ''} alt="" loading="lazy" width="26" height="26" onerror="${FALLBACK}">`;
 }
 
-// Tenis: un número por set, con el tiebreak chiquito arriba
-function setsCells(side) {
-  return `<span class="sets">${side.sets.map((s) =>
-    `<span class="set${s.won ? ' won' : ''}">${esc(s.v)}${s.tb !== null ? `<sup>${esc(s.tb)}</sup>` : ''}</span>`).join('')}</span>`;
-}
-
-function teamLine(side, m, showRecord) {
-  const hasScore = (m.status === 'live' || m.status === 'final') && side.score !== null;
-  const lost = m.status === 'final' && !side.winner && (m.home.winner || m.away.winner);
-  const score = side.sets ? setsCells(side) : `<span class="team-score">${hasScore ? esc(side.score) : ''}</span>`;
-  return `<div class="row-team${lost ? ' lost' : ''}${side.winner && side.sets ? ' won' : ''}">
-    ${logo(side.logo, side.sets ? 'team-logo flag' : 'team-logo')}
-    <span class="team-name">${esc(side.short)}</span>
-    ${showRecord && side.record ? `<span class="team-record">${esc(side.record)}</span>` : ''}
-    ${score}
-  </div>`;
+// Logo dentro de un cuadrito (como en Analytics Counter). size: '' | 'sm' | 'xl'
+function badge(url, size = '', flag = false) {
+  return `<span class="logo-badge${size ? ` ${size}` : ''}${flag ? ' flag' : ''}">${logo(url, 'badge-img')}</span>`;
 }
 
 // Nombre de la ronda en el idioma elegido; si no está traducida, la de ESPN
@@ -138,15 +125,50 @@ function rowNote(m) {
   return [m.tournament, roundLabel(m.round)].filter(Boolean).join(' · ') || null;
 }
 
+const hasScore = (m) => (m.status === 'live' || m.status === 'final')
+  && (m.home.sets ? m.home.sets.length > 0 : m.home.score !== null);
+
+// Resultado del centro: "2–1", sets de tenis "6-3 7-6⁵" o "vs"
+function scoreCell(m, first, second) {
+  if (!hasScore(m)) return '<span class="vs">vs</span>';
+  if (first.sets) {
+    return first.sets.map((s, i) => {
+      const o = second.sets[i] || { v: '', tb: null };
+      const tb = s.tb !== null || o.tb !== null ? `<sup>${esc(Math.min(s.tb ?? 99, o.tb ?? 99))}</sup>` : '';
+      return `<span class="m-set">${esc(s.v)}-${esc(o.v)}${tb}</span>`;
+    }).join('');
+  }
+  return `${esc(first.score)}<span>–</span>${esc(second.score)}`;
+}
+
+function sideOrder(m, sport) {
+  return sport.homeFirst ? [m.home, m.away] : [m.away, m.home];
+}
+
+const lost = (side, m) => m.status === 'final' && !side.winner && (m.home.winner || m.away.winner);
+
+function teamCell(side, m, sport, right = false) {
+  const record = sport.id !== 'futbol' && side.record ? `<span class="m-record">${esc(side.record)}</span>` : '';
+  const name = `<span class="m-name">${esc(side.short)}</span>`;
+  const logoHtml = badge(side.logo, 'sm', Boolean(side.sets));
+  const parts = right ? [record, name, logoHtml] : [logoHtml, name, record];
+  return `<span class="m-team${right ? ' right' : ''}${lost(side, m) ? ' dim' : ''}${side.winner ? ' win' : ''}">${parts.join('')}</span>`;
+}
+
+// Una fila: a la izquierda estado y torneo; al centro los dos equipos enfrentados
 export function matchRow(m, sport) {
-  const [first, second] = sport.homeFirst ? [m.home, m.away] : [m.away, m.home];
+  const [first, second] = sideOrder(m, sport);
   const label = t('match.aria', { a: first.name, b: second.name });
-  return `<li class="row is-${m.status}" aria-label="${esc(label)}">
-    <div class="row-status">${statusCell(m, sport.id)}</div>
-    <div class="row-teams">
-      ${teamLine(first, m, sport.id !== 'futbol')}
-      ${teamLine(second, m, sport.id !== 'futbol')}
-      ${rowNote(m) ? `<div class="row-note">${esc(rowNote(m))}</div>` : ''}
+  const note = rowNote(m);
+  return `<li class="match is-${m.status}" aria-label="${esc(label)}">
+    <div class="m-meta">
+      ${statusCell(m, sport.id)}
+      ${note ? `<span class="m-sub">${esc(note)}</span>` : ''}
+    </div>
+    <div class="m-teams">
+      ${teamCell(first, m, sport)}
+      <span class="m-score">${scoreCell(m, first, second)}</span>
+      ${teamCell(second, m, sport, true)}
     </div>
   </li>`;
 }
@@ -159,10 +181,37 @@ export function matchDays(matches, sport) {
     if (days.at(-1)?.key !== key) days.push({ key, date: m.date, list: [] });
     days.at(-1).list.push(m);
   }
-  return `<div class="days">${days.map((d) => `<section class="day">
-    <h3 class="day-title">${esc(dayLabel(d.date))}</h3>
-    <ul class="rows">${d.list.map((m) => matchRow(m, sport)).join('')}</ul>
-  </section>`).join('')}</div>`;
+  return days.map((d) => `<section class="day">
+    <h3 class="section-label">${esc(dayLabel(d.date))} <span>${d.list.length}</span></h3>
+    <ul class="list">${d.list.map((m) => matchRow(m, sport)).join('')}</ul>
+  </section>`).join('');
+}
+
+// Partido destacado arriba de la lista: el que se está jugando o, si no hay,
+// el próximo. Nombres grandes enfrentados, como en Analytics Counter.
+export function featuredMatch(m, sport) {
+  const [first, second] = sideOrder(m, sport);
+  const live = m.status === 'live';
+  const note = rowNote(m);
+  const pill = live
+    ? `<span class="pill live">${esc(t('featured.live'))}</span>`
+    : `<span class="pill">${esc(t('featured.next'))}</span>`;
+  const when = live
+    ? `<span class="live-text"><span class="live-dot"></span>${esc(liveLabel(m, sport.id))}</span>`
+    : `<span>${esc(dayLabel(m.date))} · ${esc(m.timeValid && m.date ? formatTime(m.date) : t('common.toConfirm'))}</span>`;
+  const team = (side, cls) => `<div class="pm-team ${cls}${lost(side, m) ? ' dim' : ''}">
+      ${badge(side.logo, 'xl', Boolean(side.sets))}
+      <span class="pm-team-name">${esc(side.short)}</span>
+    </div>`;
+  return `<section class="pm-card" aria-label="${esc(t('match.aria', { a: first.name, b: second.name }))}">
+    <div class="pm-feature-top">${pill}${note ? `<span class="pm-meta">${esc(note)}</span>` : ''}</div>
+    <div class="pm-versus">
+      ${team(first, 'a')}
+      <div class="pm-vs">${scoreCell(m, first, second)}</div>
+      ${team(second, 'b')}
+    </div>
+    <div class="pm-feature-foot"><span class="pm-when">${when}</span></div>
+  </section>`;
 }
 
 export function standingsTable(group, sport, title) {

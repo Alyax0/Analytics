@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#080a0e">
+<meta name="theme-color" content="#0b0b0d">
 <meta name="description" content="Fútbol, NBA, MLB y tenis en vivo: partidos, resultados, próximos encuentros, tablas, rankings y líderes. Datos de ESPN.">
 <title>Frelytics</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,700..900&family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
 <link rel="stylesheet" href="css/styles.css">
 <script type="module" src="js/app.js"></script>
 </head>
@@ -17,19 +17,19 @@
 <header class="topbar">
   <div class="topbar-inner">
     <a class="brand" href="#/futbol">
-      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-mark"></span>
       <span class="brand-name">Frelytics</span>
       <span class="brand-tag">BETA</span>
     </a>
+    <a class="live-pill" href="#/futbol"><span class="live-dot"></span><span class="live-label">En vivo</span> <span class="live-count">0</span></a>
+    <nav class="tabs" aria-label="Secciones"></nav>
     <nav class="sport-switch" aria-label="Deporte">
       <a class="sport-opt" href="#/futbol" data-sport="futbol">FUT</a>
       <a class="sport-opt" href="#/nba" data-sport="nba">NBA</a>
       <a class="sport-opt" href="#/mlb" data-sport="mlb">MLB</a>
       <a class="sport-opt" href="#/tenis" data-sport="tenis">TEN</a>
     </nav>
-    <a class="live-pill" href="#/futbol" hidden><span class="live-dot"></span><span class="live-label">En vivo</span> <span class="live-count"></span></a>
   </div>
-  <nav class="tabs" aria-label="Secciones"></nav>
 </header>
 
 <main id="app" class="container" aria-live="polite" aria-busy="true">
@@ -37,7 +37,7 @@
 </main>
 
 <dialog id="player-modal" class="modal" aria-labelledby="player-modal-title">
-  <button type="button" class="modal-close" data-action="close-player" aria-label="Cerrar">✕</button>
+  <button type="button" class="modal-close" data-action="close-player" aria-label="Cerrar"></button>
   <div id="player-modal-content"></div>
 </dialog>
 

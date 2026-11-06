@@ -5,10 +5,12 @@ import {
   normalizeScorers, normalizePlayerBio, normalizePlayerOverview, findChampion, monthOf,
 } from './model.js';
 import {
-  esc, ago, dayLabel, formatLongDate, matchRow, matchDays, standingsTable, leaderCard, rankingTable, seasonEndCard, skeletons, emptyState,
+  esc, ago, dayLabel, formatLongDate, matchRow, matchDays, featuredMatch, standingsTable, leaderCard, rankingTable, seasonEndCard,
+  skeletons, emptyState,
   errorState, playerCard, playerSkeleton,
 } from './ui.js';
 import { t, setLang, preferredLang } from './i18n.js';
+import { ICONS, BRAND_MARK } from './icons.js';
 
 // Caché del navegador por tipo de dato (el CDN de Vercel cachea aparte)
 const TTL = { recent: 60 * 1000, old: 6 * 3600 * 1000, standings: 10 * 60 * 1000, leaders: 3600 * 1000 };
@@ -179,11 +181,6 @@ let query = '';
 let searchOpen = false;
 let lastViewKey = '';
 
-const SEARCH_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-
-function updatedLine(e) {
-  return e.at ? `<span class="updated">${esc(t('common.updated', { ago: ago(e.at) }))}</span>` : '';
-}
 
 function staleNotice(e) {
   return e.stale ? `<div class="notice">${esc(t('errors.stale', { error: e.error || '' }))}</div>` : '';
@@ -208,11 +205,16 @@ function matchLists(sport, league, { matches, offseason }) {
     return emptyState(t('matches.noResultsFor', { q }));
   }
 
-  // Los en vivo van en una sola lista; el resto, agrupado por día
-  const block = (label, list, empty, live = false) => `
-    <h2 class="section-label">${live ? '<span class="dot"></span>' : ''}${esc(label)} <span class="count">${list.length || ''}</span></h2>
+  // Arriba, en grande, el partido que se está jugando o el próximo; no se repite en las listas
+  const featured = q ? null : live[0] || upcoming[0] || null;
+  const without = (list) => list.filter((m) => m !== featured);
+
+  // Título de sección grande + lista; los en vivo en una sola lista, el resto agrupado por día
+  const block = (label, list, empty, isLive = false) => `
+    <div class="pm-section-head"><h2 class="pm-h2">${isLive ? '<span class="live-dot"></span> ' : ''}${esc(label)}</h2>
+      <span class="pm-count">${list.length || ''}</span></div>
     ${!list.length ? empty
-    : live ? `<ul class="rows">${list.map((m) => matchRow(m, sport)).join('')}</ul>`
+    : isLive ? `<ul class="list">${list.map((m) => matchRow(m, sport)).join('')}</ul>`
       : matchDays(list, sport)}`;
 
   const noUpcoming = offseason?.next
@@ -221,13 +223,35 @@ function matchLists(sport, league, { matches, offseason }) {
 
   return [
     ended && !q ? seasonEndCard(ended, sport, league) : '',
-    live.length ? block(t('matches.live'), live, '', true) : '',
+    featured ? featuredMatch(featured, sport) : '',
+    without(live).length ? block(t('matches.live'), without(live), '', true) : '',
     // Con la temporada terminada no tiene sentido una sección de próximos vacía
-    ended ? '' : block(t('matches.upcoming'), upcoming, noUpcoming),
+    ended ? '' : block(t('matches.upcoming'), without(upcoming), noUpcoming),
     lastPlayed.length
       ? block(t('offseason.lastPlayed'), lastPlayed, '')
       : block(t('matches.results'), past, emptyState(t('matches.noResults'), t('matches.windowPast', { n: sport.pastDays }))),
   ].join('');
+}
+
+// Línea de datos debajo del título grande ("2 en vivo / 20 próximos / …"), como en Counter
+function heroFacts(sport, section, e) {
+  const facts = [];
+  if (e.status === 'ready') {
+    if (section === 'partidos' && e.data.offseason?.ended) {
+      // En el receso los contadores darían todo 0: mejor decir que terminó
+      facts.push(t('hero.ended', { season: esc(e.data.offseason.season || '') }));
+    } else if (section === 'partidos') {
+      const { live, upcoming, past } = splitMatches(e.data.matches, sport);
+      facts.push(t('hero.live', { n: live.length }), t('hero.upcoming', { n: upcoming.length }), t('hero.results', { n: past.length }));
+    } else if (e.data.season) {
+      facts.push(t('hero.season', { season: e.data.season }));
+      if (e.data.groups) facts.push(t('hero.teams', { n: e.data.groups.reduce((s, g) => s + g.rows.length, 0) }));
+    } else if (e.data.updated) {
+      facts.push(t('ranking.updated', { date: formatLongDate(e.data.updated) }), t('hero.top', { n: e.data.rows.length }));
+    }
+  }
+  const updated = section === 'partidos' && e.at ? `<span class="sep">/</span><span class="updated">${esc(t('common.updated', { ago: ago(e.at) }))}</span>` : '';
+  return `<div class="hero-facts">${facts.map((f) => `<span>${f}</span>`).join('<span class="sep">/</span>') || '&nbsp;'}${updated}</div>`;
 }
 
 function viewPartidos(sport, league) {
@@ -276,8 +300,8 @@ const VIEWS = {
 };
 
 function leagueLogo(league, cls) {
-  if (!Number.isInteger(league.logo)) return '';
-  return `<img class="${cls}" src="https://a.espncdn.com/i/leaguelogos/soccer/500-dark/${league.logo}.png" alt="" onerror="this.remove()">`;
+  if (!league.logo) return '';
+  return `<img class="${cls}" src="${esc(league.logo)}" alt="" onerror="this.remove()">`;
 }
 
 function liveCount() {
@@ -302,17 +326,22 @@ function renderChrome() {
   const tabs = document.querySelector('.tabs');
   tabs.setAttribute('aria-label', t('nav.sections'));
   tabs.innerHTML = sport.sections.map((s) =>
-    `<a class="tab" href="${href(sport, league, s)}"${s === section ? ' aria-current="page"' : ''}>${esc(t(`nav.${s}`))}</a>`).join('');
+    `<a class="tab" href="${href(sport, league, s)}"${s === section ? ' aria-current="page"' : ''}><span class="tab-icon">${ICONS[s] || ''}</span>${esc(t(`nav.${s}`))}</a>`).join('');
 
+  // "En vivo" siempre visible: apagado con 0, verde cuando hay partidos jugándose
   const n = liveCount();
   const pill = document.querySelector('.live-pill');
-  pill.hidden = n === 0;
+  pill.classList.toggle('on', n > 0);
   pill.href = href(sport, league, 'partidos');
   pill.querySelector('.live-label').textContent = t('nav.live');
   pill.querySelector('.live-count').textContent = n;
 
-  document.getElementById('footer-text').innerHTML =
-    `${esc(t('footer.data'))} <a href="https://www.espn.com" target="_blank" rel="noopener noreferrer">ESPN</a>. ${esc(t('footer.disclaimer'))}`;
+  document.getElementById('footer-text').innerHTML = `
+    <div class="footer-top">
+      <span class="footer-brand">Frelytics</span>
+      <ul class="footer-sources"><li><span>${esc(t('footer.data'))}</span> <a href="https://www.espn.com" target="_blank" rel="noopener noreferrer">ESPN</a></li></ul>
+    </div>
+    <p class="footer-note">${esc(t('footer.disclaimer'))}</p>`;
 }
 
 function render() {
@@ -321,34 +350,36 @@ function render() {
   const e = entry(league.id, section);
   app.setAttribute('aria-busy', String(e.status === 'loading'));
 
-  const title = `${leagueLogo(league, 'h1-logo')}${esc(league.name)}`;
   const chips = sport.leagues.length > 1
     ? `<nav class="leagues" aria-label="${esc(t('nav.league'))}">${sport.leagues.map((l) =>
       `<a class="league-chip" href="${href(sport, l, section)}"${l.id === league.id ? ' aria-current="true"' : ''}>${leagueLogo(l, 'chip-logo')}${esc(l.name)}</a>`).join('')}</nav>`
     : '';
+  // Deporte · liga arriba del título; en NBA y MLB la liga es el deporte
+  const kicker = [t(`sports.${sport.id}`), sport.leagues.length > 1 ? league.name : null].filter(Boolean).join(' · ');
 
   // Las tarjetas se animan al entrar a una vista, no en cada actualización
   const viewKey = `${league.id}|${section}|${e.status}`;
   app.classList.toggle('static', viewKey === lastViewKey);
   lastViewKey = viewKey;
 
-  // A la derecha del título: "Actualizado hace…" y la lupa en Partidos; la temporada en Tabla y Líderes
-  let tools = '';
-  if (section === 'partidos') {
-    tools = `${updatedLine(e)}
-      <button type="button" class="icon-btn" data-action="search" aria-expanded="${searchOpen}" aria-controls="filter"
-        aria-label="${esc(t('matches.filter'))}" title="${esc(t('matches.filter'))}">${SEARCH_ICON}</button>`;
-  } else if (e.status === 'ready' && e.data.season) {
-    tools = `<span class="updated">${esc(t('table.season', { season: e.data.season }))}</span>`;
-  } else if (e.status === 'ready' && e.data.updated) {
-    tools = `<span class="updated">${esc(t('ranking.updated', { date: formatLongDate(e.data.updated) }))}</span>`;
-  }
+  // La lupa del filtro va al lado de las ligas, solo en Partidos
+  const search = section === 'partidos'
+    ? `<button type="button" class="search-toggle" data-action="search" aria-expanded="${searchOpen}" aria-controls="filter"
+        aria-label="${esc(t('matches.filter'))}" title="${esc(t('matches.filter'))}">${ICONS.buscar}</button>`
+    : '';
 
   // Si el foco estaba en el filtro, se recupera después de redibujar
   const filterFocused = document.activeElement?.id === 'filter';
   app.innerHTML = `
-    <div class="page-head"><h1>${title}</h1><div class="head-tools">${tools}</div></div>
-    ${chips}
+    <section class="pm-head${league.logo ? ' has-art' : ''}">
+      <div class="pm-head-text">
+        <span class="kicker"><span class="kicker-dot"></span>${esc(kicker)}</span>
+        <h1 class="pm-title">${esc(t(`nav.${section}`))}</h1>
+        ${heroFacts(sport, section, e)}
+      </div>
+      ${league.logo ? `<div class="pm-art">${leagueLogo(league, 'pm-art-img')}</div>` : ''}
+    </section>
+    ${chips || search ? `<div class="head-row">${chips || '<span></span>'}${search}</div>` : ''}
     ${VIEWS[section](sport, league)}`;
   // En el celular la fila de ligas se desliza: que la elegida quede a la vista
   const leaguesNav = app.querySelector('.leagues');
@@ -460,7 +491,7 @@ setInterval(() => {
   else if (e.status === 'ready' && route.section === 'partidos') {
     // solo refresca el "actualizado hace…"; en Tabla, Líderes y Ranking ese
     // lugar muestra la temporada o la fecha del ranking y no se toca
-    const line = app.querySelector('.page-head .updated');
+    const line = app.querySelector('.hero-facts .updated');
     if (line) line.textContent = t('common.updated', { ago: ago(e.at) });
   }
 }, 15 * 1000);
@@ -472,5 +503,7 @@ document.addEventListener('visibilitychange', () => {
 // ===================== INICIO =====================
 
 await setLang(preferredLang());
+document.querySelector('.brand-mark').innerHTML = BRAND_MARK;
+document.querySelector('.modal-close').innerHTML = ICONS.cerrar;
 render();
 ensureLoaded();
