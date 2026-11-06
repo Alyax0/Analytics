@@ -405,8 +405,9 @@ setInterval(() => {
   const e = entry(route.league.id, 'partidos');
   const every = liveCount() > 0 ? REFRESH_LIVE : REFRESH_IDLE;
   if (e.status === 'ready' && Date.now() - e.at >= every) load(route.sport, route.league, 'partidos', { force: true });
-  else if (e.status === 'ready') {
-    // solo refresca el "actualizado hace…"
+  else if (e.status === 'ready' && route.section === 'partidos') {
+    // solo refresca el "actualizado hace…"; en Tabla, Líderes y Ranking ese
+    // lugar muestra la temporada o la fecha del ranking y no se toca
     const line = app.querySelector('.page-head .updated');
     if (line) line.textContent = t('common.updated', { ago: ago(e.at) });
   }
