@@ -2,11 +2,11 @@ import { SPORTS, DEFAULT_SPORT } from './sports.js';
 import { espnGet } from './api.js';
 import {
   normalizeScoreboard, normalizeLatest, scoreboardRequests, splitMatches, normalizeStandings, normalizeLeaders, normalizeRankings,
-  findChampion, monthOf,
+  normalizeScorers, normalizePlayerBio, normalizePlayerOverview, findChampion, monthOf,
 } from './model.js';
 import {
   esc, ago, dayLabel, formatLongDate, matchRow, matchDays, standingsTable, leaderCard, rankingTable, seasonEndCard, skeletons, emptyState,
-  errorState,
+  errorState, playerCard, playerSkeleton,
 } from './ui.js';
 import { t, setLang, preferredLang } from './i18n.js';
 
@@ -135,6 +135,10 @@ const FETCHERS = {
     });
     return { data: r.data, results: [r] };
   },
+  async goleadores(sport, league, force) {
+    const r = await espnGet(league.id, 'scorers', {}, { ttl: TTL.leaders, force, normalize: (b) => normalizeScorers(b) });
+    return { data: r.data, results: [r] };
+  },
 };
 
 async function load(sport, league, section, { force = false } = {}) {
@@ -253,20 +257,23 @@ function viewTabla(sport, league) {
   });
 }
 
-function viewLideres(sport, league) {
-  const e = entry(league.id, 'lideres');
+// Líderes (NBA, MLB) y Goleadores (fútbol) usan las mismas tarjetas
+const viewLeaders = (section) => (sport, league) => {
+  const e = entry(league.id, section);
   return bodyFor(e, skeletons(3), (data) => {
-    if (!data.categories.length) return emptyState(t('leaders.empty'));
+    if (!data.categories.some((c) => c.leaders.length)) return emptyState(t('leaders.empty'));
     return `<div class="leaders">${data.categories.map((c) => leaderCard(c, sport)).join('')}</div>`;
   });
-}
+};
 
 function viewRanking(sport, league) {
   const e = entry(league.id, 'ranking');
   return bodyFor(e, skeletons(1, 'tall'), (data) => (data.rows.length ? rankingTable(data) : emptyState(t('ranking.empty'))));
 }
 
-const VIEWS = { partidos: viewPartidos, tabla: viewTabla, lideres: viewLideres, ranking: viewRanking };
+const VIEWS = {
+  partidos: viewPartidos, tabla: viewTabla, lideres: viewLeaders('lideres'), goleadores: viewLeaders('goleadores'), ranking: viewRanking,
+};
 
 function leagueLogo(league, cls) {
   if (!Number.isInteger(league.logo)) return '';
@@ -290,6 +297,7 @@ function renderChrome() {
     else a.removeAttribute('aria-current');
   });
   document.querySelector('.sport-switch').setAttribute('aria-label', t('nav.sport'));
+  document.querySelector('.modal-close').setAttribute('aria-label', t('player.close'));
 
   const tabs = document.querySelector('.tabs');
   tabs.setAttribute('aria-label', t('nav.sections'));
@@ -393,6 +401,44 @@ app.addEventListener('click', (ev) => {
     render();
   }
   if (ev.target.closest('[data-action="search"]')) toggleSearch(!searchOpen);
+  const player = ev.target.closest('[data-player]');
+  if (player) openPlayer(player.dataset.player);
+});
+
+// ===================== FICHA DE JUGADOR =====================
+// Un <dialog> con dos pedidos en paralelo: datos personales y estadísticas.
+// Si las estadísticas fallan, se muestra igual la ficha sin ellas.
+
+const modal = document.getElementById('player-modal');
+const modalBody = document.getElementById('player-modal-content');
+let playerGen = 0;
+let playerId = null;
+
+async function openPlayer(id) {
+  const gen = ++playerGen;
+  playerId = id;
+  const { sport, league } = route;
+  modalBody.innerHTML = playerSkeleton();
+  if (!modal.open) modal.showModal();
+  const opts = { ttl: 30 * 60 * 1000 };
+  const [bio, overview] = await Promise.allSettled([
+    espnGet(league.id, 'player', { athlete: id }, { ...opts, normalize: normalizePlayerBio }),
+    espnGet(league.id, 'player-overview', { athlete: id }, { ...opts, normalize: normalizePlayerOverview }),
+  ]);
+  // Si mientras cargaba se abrió otro jugador o se cerró, esta respuesta ya no importa
+  if (gen !== playerGen || !modal.open) return;
+  modalBody.innerHTML = bio.status === 'fulfilled'
+    ? playerCard(bio.value.data, overview.status === 'fulfilled' ? overview.value.data : null, sport)
+    : errorState(bio.reason.message);
+}
+
+modal.addEventListener('click', (ev) => {
+  // Clic en el fondo (fuera del contenido) o en la cruz
+  if (ev.target === modal || ev.target.closest('[data-action="close-player"]')) modal.close();
+  if (ev.target.closest('[data-action="retry"]') && playerId) openPlayer(playerId);
+});
+modal.addEventListener('close', () => {
+  playerGen++;
 });
 
 app.addEventListener('keydown', (ev) => {

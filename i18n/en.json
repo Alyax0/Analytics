@@ -10,6 +10,7 @@
     "partidos": "Games",
     "tabla": "Standings",
     "lideres": "Leaders",
+    "goleadores": "Top scorers",
     "ranking": "Rankings"
   },
   "common": {
@@ -102,8 +103,23 @@
     "updated": "Rankings as of {date}",
     "empty": "No rankings available."
   },
+  "player": {
+    "open": "Open {name}'s profile",
+    "close": "Close",
+    "age": "{n} years old",
+    "stats": "Stats",
+    "split": "Season",
+    "lastGames": "Last games",
+    "game": "Game",
+    "noStats": "ESPN has no stats for this player.",
+    "result": { "W": "W", "L": "L", "D": "D", "T": "T" },
+    "splits": {}
+  },
   "leaders": {
     "empty": "No stats for this season yet.",
+    "apps": "{n} GP",
+    "goalsLeaders": "Goals",
+    "assistsLeaders": "Assists",
     "pointsPerGame": "Points per game",
     "reboundsPerGame": "Rebounds per game",
     "assistsPerGame": "Assists per game",

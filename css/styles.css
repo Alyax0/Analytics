@@ -165,11 +165,42 @@ table.standings { width: 100%; border-collapse: collapse; font-size: 13px; }
 .leader-title { font-family: var(--font-head); font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; }
 .leader-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
 .leader-row:last-child { border-bottom: none; }
+/* Filas que abren la ficha del jugador */
+button.leader-row { width: 100%; background: none; border-width: 0 0 1px; text-align: left; cursor: pointer; border-radius: 6px; }
+button.leader-row:last-child { border-bottom: none; }
+button.leader-row:hover .leader-name { color: var(--accent); }
+button.leader-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .leader-rank { width: 16px; font-family: var(--font-head); font-weight: 700; font-size: 11px; color: var(--text3); }
-.leader-photo { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: var(--bg4); flex-shrink: 0; }
+.leader-photo { width: 32px; height: 32px; border-radius: 50%; object-fit: contain; background: var(--bg4); flex-shrink: 0; }
 .leader-info { flex: 1; min-width: 0; }
-.leader-name { font-family: var(--font-head); font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.leader-team { font-size: 11px; color: var(--text3); }
+.leader-name { display: block; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.leader-team { display: block; font-size: 11px; color: var(--text3); }
+
+/* ── FICHA DE JUGADOR ── */
+.modal { margin: auto; width: min(720px, calc(100% - 24px)); max-height: calc(100% - 24px); padding: 20px 18px; background: var(--bg2); color: var(--text); border: 1px solid var(--border2); border-radius: var(--radius); overflow-y: auto; }
+.modal::backdrop { background: rgba(0,0,0,0.7); backdrop-filter: blur(3px); }
+.modal-close { position: sticky; top: 0; float: right; width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); cursor: pointer; z-index: 1; }
+.modal-close:hover { color: var(--text); border-color: var(--accent); }
+.player-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; padding-right: 40px; }
+.player-photo { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; background: var(--bg4); flex-shrink: 0; }
+.player-photo.team { object-fit: contain; padding: 10px; }
+.player-photo.empty { display: block; }
+.player-name { font-family: var(--font-head); font-size: 22px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.15; }
+.player-team { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text2); margin-top: 4px; }
+.player-facts { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; font-size: 12px; color: var(--text3); }
+.player-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 18px; }
+.player-summary > div { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 10px 6px; text-align: center; }
+.ps-value { display: block; font-family: var(--font-head); font-weight: 800; font-size: 18px; color: var(--accent); }
+.ps-label { display: block; font-size: 11px; color: var(--text2); margin-top: 2px; }
+.player-section { font-family: var(--font-head); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--text2); margin: 4px 0 8px; }
+.player-table { margin-bottom: 18px; }
+.player-table td.team-col { white-space: nowrap; }
+.game-cell { display: inline-flex; align-items: center; gap: 6px; }
+.game-cell .team-logo { width: 18px; height: 18px; }
+.game-res { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 5px; font-size: 11px; font-weight: 700; background: var(--bg4); color: var(--text2); }
+.game-res.w { background: rgba(61,220,132,0.15); color: #3ddc84; }
+.game-res.l { background: rgba(255,77,77,0.15); color: var(--red); }
+.game-score { color: var(--text3); font-size: 12px; }
 .leader-value { font-family: var(--font-head); font-weight: 800; font-size: 16px; color: var(--accent); }
 
 /* ── ESTADOS ── */

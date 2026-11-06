@@ -228,15 +228,113 @@ export function leaderCard(cat, sport) {
   const key = `leaders.${cat.name}`;
   const title = t(key) === key ? cat.abbr : t(key);
   const dec = sport.leaders[cat.name];
+  // Si el deporte tiene ficha de jugador, cada fila es un botón que la abre
+  const row = (l, i) => {
+    const team = [l.team, l.apps !== null && l.apps !== undefined ? t('leaders.apps', { n: l.apps }) : null].filter(Boolean).join(' · ');
+    const inner = `<span class="leader-rank">${i + 1}</span>
+      ${logo(l.photo, 'leader-photo')}
+      <span class="leader-info"><span class="leader-name">${esc(l.name)}</span><span class="leader-team">${esc(team)}</span></span>
+      <span class="leader-value">${esc(formatStat(l.value, dec))}</span>`;
+    return sport.players && l.id
+      ? `<button type="button" class="leader-row" data-player="${esc(l.id)}" aria-label="${esc(t('player.open', { name: l.name }))}">${inner}</button>`
+      : `<div class="leader-row">${inner}</div>`;
+  };
   return `<div class="leader-card">
     <div class="leader-title">${esc(title)}</div>
-    ${cat.leaders.map((l, i) => `<div class="leader-row">
-      <span class="leader-rank">${i + 1}</span>
-      ${logo(l.photo, 'leader-photo')}
-      <div class="leader-info"><div class="leader-name">${esc(l.name)}</div><div class="leader-team">${esc(l.team)}</div></div>
-      <span class="leader-value">${esc(formatStat(l.value, dec))}</span>
-    </div>`).join('')}
+    ${cat.leaders.map(row).join('')}
   </div>`;
+}
+
+// ---------- Ficha de jugador ----------
+
+// Abreviaturas de ESPN en el idioma elegido ("GP" → "PJ"); si no está, la original
+function statLabel(abbr) {
+  const key = `stats.${abbr.replace(/[^a-z0-9]/gi, '')}`;
+  return t(key) === key ? abbr : t(key);
+}
+
+// Algunos valores vienen como texto ("Started", "Substitute"): se traducen si se puede
+function statValue(v) {
+  if (/^[\d.,\-–()% ]*$/.test(v)) return v;
+  const key = `stats.values.${String(v).replace(/[^a-z]/gi, '')}`;
+  return t(key) === key ? v : t(key);
+}
+
+function statsTable(labels, names, rows, firstCol) {
+  return `<div class="table-wrap player-table">
+    <table class="standings">
+      <thead><tr><th class="team-col">${esc(firstCol)}</th>${labels.map((l, i) =>
+        `<th title="${esc(names[i] || l)}">${esc(statLabel(l))}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map((r) => `<tr><td class="team-col">${r.head}</td>${r.stats.map((s) => `<td>${esc(statValue(s))}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+export function playerSkeleton() {
+  return `<div class="player-head"><span class="player-photo empty"></span><div class="skeleton" style="height:48px;flex:1"></div></div>
+    ${skeletons(2, 'row-sk')}`;
+}
+
+// Altura y peso: en español en metros y kilos; en inglés, como los da ESPN
+function bodyLine(bio) {
+  if (getLang() !== 'en' && (bio.heightIn || bio.weightLb)) {
+    const n = new Intl.NumberFormat(getLang(), { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+    return [
+      bio.heightIn ? `${n.format(bio.heightIn * 0.0254)} m` : '',
+      bio.weightLb ? `${Math.round(bio.weightLb * 0.4536)} kg` : '',
+    ].filter(Boolean).join(' · ');
+  }
+  return [bio.height, bio.weight].filter(Boolean).join(' · ');
+}
+
+export function playerCard(bio, overview, sport) {
+  const posKey = `positions.${sport.id}.${bio.position.replace(/[^a-z]/gi, '')}`;
+  const facts = [
+    t(posKey) === posKey ? bio.position : t(posKey),
+    bio.jersey ? `#${bio.jersey}` : '',
+    bio.age !== null ? t('player.age', { n: bio.age }) : '',
+    bio.country || bio.birthPlace,
+    bodyLine(bio),
+  ].filter(Boolean);
+  const photo = bio.photo ? logo(bio.photo, 'player-photo') : logo(bio.team?.logo, 'player-photo team');
+
+  // En fútbol ESPN arma el resumen con la liga "por defecto" del jugador, que
+  // puede no ser la actual: ahí alcanza con la tabla por competición
+  const summary = bio.summary.length && sport.id !== 'futbol'
+    ? `<div class="player-summary">${bio.summary.map((s) =>
+      `<div><span class="ps-value">${esc(s.value)}</span><span class="ps-label">${esc(statLabel(s.label))}</span></div>`).join('')}</div>`
+    : '';
+
+  const splits = overview?.splits.length
+    ? `<h3 class="player-section">${esc(t('player.stats'))}</h3>
+      ${statsTable(overview.labels, overview.names, overview.splits.map((s) => ({ head: esc(splitName(s.name)), stats: s.stats })), t('player.split'))}`
+    : '';
+
+  const games = overview?.games.length
+    ? `<h3 class="player-section">${esc(t('player.lastGames'))}</h3>
+      ${statsTable(overview.gameLabels, overview.gameNames, overview.games.map((g) => ({
+        head: `<span class="game-cell"><span class="game-res ${g.result === 'W' ? 'w' : g.result === 'L' ? 'l' : ''}">${esc(t(`player.result.${g.result}`) === `player.result.${g.result}` ? g.result : t(`player.result.${g.result}`))}</span>
+          ${esc(g.atVs)} ${logo(g.opponentLogo, 'team-logo')} ${esc(g.opponent)} <span class="game-score">${esc(g.score)}</span></span>`,
+        stats: g.stats,
+      })), t('player.game'))}`
+    : '';
+
+  return `<div class="player-head">
+      ${photo}
+      <div class="player-id">
+        <h2 class="player-name" id="player-modal-title">${esc(bio.name)}</h2>
+        ${bio.team ? `<div class="player-team">${logo(bio.team.logo, 'team-logo')}${esc(bio.team.name)}</div>` : ''}
+        <div class="player-facts">${facts.map((f) => `<span>${esc(f)}</span>`).join('')}</div>
+      </div>
+    </div>
+    ${summary}${splits}${games}
+    ${!splits && !games ? emptyState(t('player.noStats')) : ''}`;
+}
+
+// "Regular Season", "Career"… en el idioma elegido; los nombres de competiciones quedan igual
+function splitName(name) {
+  const key = `player.splits.${name.replace(/[^a-z]/gi, '')}`;
+  return t(key) === key ? name : t(key);
 }
 
 // Aviso de temporada terminada, con el campeón si se pudo detectar

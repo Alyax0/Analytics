@@ -17,7 +17,11 @@ export const SPORTS = {
     pastDays: 10,
     nextDays: 14,
     homeFirst: true,
-    sections: ['partidos', 'tabla'],
+    sections: ['partidos', 'tabla', 'goleadores'],
+    // Categorías de /statistics de ESPN → decimales (los goles van enteros)
+    leaders: { goalsLeaders: 0, assistsLeaders: 0 },
+    // Se puede abrir la ficha de un jugador (en tenis ESPN no la tiene)
+    players: true,
     leagues: [
       { id: 'eng.1', name: 'Premier League', logo: 23 },
       { id: 'esp.1', name: 'LaLiga', logo: 15 },
@@ -54,6 +58,7 @@ export const SPORTS = {
     nextDays: 3,
     homeFirst: false,
     sections: ['partidos', 'tabla', 'lideres'],
+    players: true,
     leagues: [{ id: 'nba', name: 'NBA' }],
     standings: {
       sortBy: 'playoffSeed',
@@ -82,6 +87,7 @@ export const SPORTS = {
     nextDays: 3,
     homeFirst: false,
     sections: ['partidos', 'tabla', 'lideres'],
+    players: true,
     leagues: [{ id: 'mlb', name: 'MLB' }],
     standings: {
       sortBy: 'playoffSeed',
