@@ -24,6 +24,8 @@ function fmt(options) {
 }
 
 export const formatTime = (ts) => fmt({ hour: '2-digit', minute: '2-digit' }).format(ts);
+// "29 de octubre" / "October 29", para usar dentro de una frase
+export const formatLongDate = (ts) => fmt({ day: 'numeric', month: 'long' }).format(ts);
 
 function dayKey(d) {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -58,6 +60,7 @@ function liveLabel(m, sportId) {
     if (m.period > 4) return t('match.overtime', { n: m.period - 4, clock: m.clock });
     return t('match.quarter', { n: m.period, clock: m.clock });
   }
+  if (sportId === 'tenis') return t('match.set', { n: m.period || 1 });
   if (sportId === 'mlb') {
     // ESPN manda "Top 7th", "Bot 7th", "Mid 7th" o "End 7th"
     const half = { top: 'top', bot: 'bottom', bottom: 'bottom', mid: 'middle', middle: 'middle', end: 'end' }[
@@ -68,6 +71,9 @@ function liveLabel(m, sportId) {
 }
 
 function finalLabel(m) {
+  // Tenis: abandono y W.O. cuentan como terminados
+  if (m.statusName === 'STATUS_RETIRED') return t('match.retired');
+  if (m.statusName === 'STATUS_WALKOVER') return t('match.walkover');
   // "Final/OT", "Final/12" (entradas), "FT-Pens", "AET"
   if (/pen/i.test(m.detail)) return t('match.finalPens');
   if (/AET/i.test(m.detail)) return t('match.finalAet');
@@ -97,19 +103,39 @@ const FALLBACK = "if(this.dataset.fb){this.src=this.dataset.fb;this.dataset.fb='
 function logo(url, cls = 'team-logo') {
   const src = safeUrl(url);
   if (!src) return `<span class="${cls} empty"></span>`;
-  const dark = src.replace(/\/teamlogos\/([a-z]+)\/500\//, '/teamlogos/$1/500-dark/');
+  // Las banderas de países no tienen versión oscura
+  const dark = src.includes('/teamlogos/countries/') ? src : src.replace(/\/teamlogos\/([a-z]+)\/500\//, '/teamlogos/$1/500-dark/');
   return `<img class="${cls}" src="${esc(dark)}" ${dark !== src ? `data-fb="${esc(src)}"` : ''} alt="" loading="lazy" width="26" height="26" onerror="${FALLBACK}">`;
+}
+
+// Tenis: un número por set, con el tiebreak chiquito arriba
+function setsCells(side) {
+  return `<span class="sets">${side.sets.map((s) =>
+    `<span class="set${s.won ? ' won' : ''}">${esc(s.v)}${s.tb !== null ? `<sup>${esc(s.tb)}</sup>` : ''}</span>`).join('')}</span>`;
 }
 
 function teamLine(side, m, showRecord) {
   const hasScore = (m.status === 'live' || m.status === 'final') && side.score !== null;
   const lost = m.status === 'final' && !side.winner && (m.home.winner || m.away.winner);
-  return `<div class="row-team${lost ? ' lost' : ''}">
-    ${logo(side.logo)}
+  const score = side.sets ? setsCells(side) : `<span class="team-score">${hasScore ? esc(side.score) : ''}</span>`;
+  return `<div class="row-team${lost ? ' lost' : ''}${side.winner && side.sets ? ' won' : ''}">
+    ${logo(side.logo, side.sets ? 'team-logo flag' : 'team-logo')}
     <span class="team-name">${esc(side.short)}</span>
     ${showRecord && side.record ? `<span class="team-record">${esc(side.record)}</span>` : ''}
-    <span class="team-score">${hasScore ? esc(side.score) : ''}</span>
+    ${score}
   </div>`;
+}
+
+// Nombre de la ronda en el idioma elegido; si no está traducida, la de ESPN
+function roundLabel(round) {
+  if (!round) return null;
+  const key = `rounds.${round.replace(/[^a-z0-9]/gi, '')}`;
+  return t(key) === key ? round : t(key);
+}
+
+function rowNote(m) {
+  if (m.note) return m.note;
+  return [m.tournament, roundLabel(m.round)].filter(Boolean).join(' · ') || null;
 }
 
 export function matchRow(m, sport) {
@@ -120,7 +146,7 @@ export function matchRow(m, sport) {
     <div class="row-teams">
       ${teamLine(first, m, sport.id !== 'futbol')}
       ${teamLine(second, m, sport.id !== 'futbol')}
-      ${m.note ? `<div class="row-note">${esc(m.note)}</div>` : ''}
+      ${rowNote(m) ? `<div class="row-note">${esc(rowNote(m))}</div>` : ''}
     </div>
   </li>`;
 }
@@ -165,6 +191,30 @@ export function standingsTable(group, sport, title) {
       <tbody>${rows.join('')}</tbody>
     </table>
     ${legend}
+  </div>`;
+}
+
+// Ranking ATP/WTA: posición, jugador con bandera, puntos y cuántos puestos subió o bajó
+export function rankingTable(data) {
+  const fmtPoints = new Intl.NumberFormat(getLang());
+  const trend = (n) => {
+    if (n > 0) return `<span class="trend up" title="${esc(t('ranking.up', { n }))}">▲ ${n}</span>`;
+    if (n < 0) return `<span class="trend down" title="${esc(t('ranking.down', { n: -n }))}">▼ ${-n}</span>`;
+    return '<span class="trend">–</span>';
+  };
+  return `<div class="table-wrap">
+    <table class="standings ranking">
+      <thead><tr>
+        <th>#</th><th class="team-col">${esc(t('ranking.player'))}</th>
+        <th>${esc(t('ranking.points'))}</th><th title="${esc(t('ranking.trendLong'))}">${esc(t('ranking.trend'))}</th>
+      </tr></thead>
+      <tbody>${data.rows.map((r) => `<tr>
+        <td class="pos">${esc(r.rank)}</td>
+        <td class="team-col"><span class="team-cell">${logo(r.flag, 'team-logo flag')}<span>${esc(r.name)}</span></span></td>
+        <td class="main">${r.points === null ? '–' : esc(fmtPoints.format(r.points))}</td>
+        <td>${trend(r.trend)}</td>
+      </tr>`).join('')}</tbody>
+    </table>
   </div>`;
 }
 

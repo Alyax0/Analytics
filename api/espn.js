@@ -25,6 +25,8 @@ const LEAGUES = {
   'conmebol.libertadores': 'soccer/conmebol.libertadores',
   nba: 'basketball/nba',
   mlb: 'baseball/mlb',
+  atp: 'tennis/atp',
+  wta: 'tennis/wta',
 };
 
 const SITE = 'https://site.api.espn.com/apis/site/v2/sports';
@@ -70,6 +72,7 @@ const PATHS = {
   teams: { url: (l) => `${SITE}/${l}/teams`, ttl: 86400, params: [] },
   schedule: { url: (l, q) => `${SITE}/${l}/teams/${q.get('team')}/schedule`, ttl: 600, params: ['team', 'season'], required: ['team'] },
   leaders: { url: (l) => `${SITE_V3}/${l}/leaders`, ttl: 3600, params: ['season', 'seasontype'], only: ['nba', 'mlb'] },
+  rankings: { url: (l) => `${SITE}/${l}/rankings`, ttl: 3600, params: [], only: ['atp', 'wta'] },
 };
 
 function parse(query) {
