@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "{name} · Frelytics"
+    "title": "{name} · Matchly"
   },
   "nav": {
     "sport": "Deporte",
@@ -190,6 +190,6 @@
   },
   "footer": {
     "data": "Datos de",
-    "disclaimer": "Frelytics no está afiliado a ESPN."
+    "disclaimer": "Matchly no está afiliado a ESPN."
   }
 }
