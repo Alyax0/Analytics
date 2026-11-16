@@ -12,11 +12,14 @@ export const ICONS = {
   cerrar: svg('<path d="M6 6l12 12M18 6 6 18"/>'),
 };
 
-// Logo de Statline: un marcador con dos barras, en el color del deporte activo
+// Logo de Matchly: el mismo dibujo que favicon.svg (marco, tres barras y la pelota),
+// pero en el color del deporte activo en vez del verde fijo
 export const BRAND_MARK = `
-  <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false">
-    <rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="none" stroke="currentColor" stroke-width="3"/>
-    <rect x="8" y="9" width="5" height="14" rx="1.5" fill="currentColor"/>
-    <rect x="15.5" y="14" width="5" height="9" rx="1.5" fill="currentColor" opacity=".55"/>
-    <path d="M23 9.5 l3 3 -3 3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <svg viewBox="0 0 64 64" width="28" height="28" aria-hidden="true" focusable="false">
+    <rect x="5" y="5" width="54" height="54" rx="11" fill="none" stroke="currentColor" stroke-width="5"/>
+    <rect x="15" y="34" width="7" height="15" rx="2" fill="currentColor"/>
+    <rect x="26" y="27" width="7" height="22" rx="2" fill="currentColor"/>
+    <rect x="37" y="30" width="7" height="19" rx="2" fill="currentColor"/>
+    <circle cx="44" cy="19" r="6" fill="#ffffff"/>
+    <path d="M44 15.5l3 2.2-1.1 3.5h-3.8l-1.1-3.5z" fill="#0b0f0d"/>
   </svg>`;

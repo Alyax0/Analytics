@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "{name} · Statline"
+    "title": "{name} · Matchly"
   },
   "nav": {
     "sport": "Sport",
@@ -160,6 +160,6 @@
   },
   "footer": {
     "data": "Data from",
-    "disclaimer": "Statline is not affiliated with ESPN."
+    "disclaimer": "Matchly is not affiliated with ESPN."
   }
 }
