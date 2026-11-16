@@ -12,7 +12,7 @@ export const ICONS = {
   cerrar: svg('<path d="M6 6l12 12M18 6 6 18"/>'),
 };
 
-// Logo de Frelytics: un marcador con dos barras, en el color del deporte activo
+// Logo de Statline: un marcador con dos barras, en el color del deporte activo
 export const BRAND_MARK = `
   <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false">
     <rect x="1.5" y="1.5" width="29" height="29" rx="8" fill="none" stroke="currentColor" stroke-width="3"/>

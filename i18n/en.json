@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "{name} · Frelytics"
+    "title": "{name} · Statline"
   },
   "nav": {
     "sport": "Sport",
@@ -160,6 +160,6 @@
   },
   "footer": {
     "data": "Data from",
-    "disclaimer": "Frelytics is not affiliated with ESPN."
+    "disclaimer": "Statline is not affiliated with ESPN."
   }
 }

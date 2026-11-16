@@ -338,7 +338,7 @@ function renderChrome() {
 
   document.getElementById('footer-text').innerHTML = `
     <div class="footer-top">
-      <span class="footer-brand">Frelytics</span>
+      <span class="footer-brand">Statline</span>
       <ul class="footer-sources"><li><span>${esc(t('footer.data'))}</span> <a href="https://www.espn.com" target="_blank" rel="noopener noreferrer">ESPN</a></li></ul>
     </div>
     <p class="footer-note">${esc(t('footer.disclaimer'))}</p>`;
